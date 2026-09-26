@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black Hole Studio — AI Interior Design</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                linear-gradient(rgba(138, 43, 226, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(138, 43, 226, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        nav {
+            position: fixed; top: 0; width: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(138, 43, 226, 0.2);
+            z-index: 1000;
+            padding: 1rem 5%;
+        }
+
+        .nav-container {
+            max-width: 1400px; margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem; font-weight: 800; letter-spacing: 2px;
+            background: linear-gradient(90deg, #8a2be2, #00ffff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-links a {
+            color: #ccc; text-decoration: none; font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover { color: #00ffff; }
+
+        .hero {
+            height: 100vh; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center;
+            position: relative; z-index: 1; padding: 0 5%;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 800;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #ffffff 0%, #8a2be2 50%, #00ffff 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: textGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes textGlow {
+            from { filter: drop-shadow(0 0 15px rgba(138, 43, 226, 0.3)); }
+            to { filter: drop-shadow(0 0 25px rgba(0, 255, 255, 0.4)); }
+        }
+
+        .hero p { font-size: clamp(1.1rem, 2vw, 1.5rem); color: #aaa; margin-bottom: 3rem; }
+
+        .btn-primary {
+            padding: 1rem 3rem; font-size: 1.1rem; font-weight: 600;
+            background: linear-gradient(90deg, #8a2be2, #00ffff);
+            color: #000; border: none; border-radius: 50px;
+            cursor: pointer; text-decoration: none;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: inline-block;
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(138, 43, 226, 0.5);
+        }
+        .btn-primary:disabled {
+            opacity: 0.6; cursor: not-allowed;
+            transform: none;
+        }
+
+        .black-hole-container {
+            position: relative; width: 400px; height: 400px;
+            margin: 4rem auto; display: flex;
+            justify-content: center; align-items: center;
+        }
+
+        .black-hole { position: relative; width: 200px; height: 200px; }
+
+        .black-hole-core {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px; height: 60px; background: #000;
+            border-radius: 50%;
+            box-shadow: 0 0 60px rgba(0, 0, 0, 1), 0 0 120px rgba(138, 43, 226, 0.5);
+            z-index: 10;
+        }
+
+        .accretion-disk {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px; height: 200px; border-radius: 50%;
+            background: radial-gradient(circle,
+                transparent 30%, rgba(255, 140, 0, 0.3) 40%,
+                rgba(138, 43, 226, 0.4) 50%, rgba(0, 255, 255, 0.2) 60%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        .accretion-disk::before {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 160px; height: 160px; border-radius: 50%;
+            background: radial-gradient(circle,
+                transparent 40%, rgba(255, 100, 0, 0.5) 50%,
+                rgba(138, 43, 226, 0.6) 60%, transparent 70%);
+            animation: rotate 15s linear infinite reverse;
+        }
+
+        .particle {
+            position: absolute; width: 4px; height: 4px;
+            background: #00ffff; border-radius: 50%;
+            box-shadow: 0 0 10px #00ffff;
+        }
+        .particle:nth-child(1) { top: 20%; left: 50%; animation: orbit 8s linear infinite; }
+        .particle:nth-child(2) { top: 50%; left: 80%; animation: orbit 10s linear infinite 1s; }
+        .particle:nth-child(3) { top: 80%; left: 50%; animation: orbit 12s linear infinite 2s; }
+        .particle:nth-child(4) { top: 50%; left: 20%; animation: orbit 9s linear infinite 0.5s; }
+
+        @keyframes rotate {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        @keyframes orbit {
+            0% { transform: rotate(0deg) translateX(100px) rotate(0deg); opacity: 1; }
+            100% { transform: rotate(360deg) translateX(100px) rotate(-360deg); opacity: 0.3; }
+        }
+
+        section {
+            padding: 6rem 5%; max-width: 1400px;
+            margin: 0 auto; position: relative; z-index: 1;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3rem); font-weight: 700;
+            text-align: center; margin-bottom: 1.5rem;
+            background: linear-gradient(90deg, #8a2be2, #00ffff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .section-subtitle {
+            text-align: center; color: #888; font-size: 1.1rem;
+            max-width: 700px; margin: 0 auto 3rem auto;
+        }
+
+        .about-intro {
+            text-align: center; font-size: 1.15rem; color: #aaa;
+            max-width: 800px; margin: 0 auto 3rem auto; line-height: 1.7;
+        }
+
+        .about-cards {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem; margin-top: 3rem;
+        }
+
+        .about-card {
+            background: rgba(20, 10, 40, 0.6);
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            border-radius: 16px; padding: 2rem;
+            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+        }
+        .about-card:hover {
+            transform: translateY(-8px);
+            border-color: #00ffff;
+            box-shadow: 0 10px 40px rgba(0, 255, 255, 0.15);
+        }
+        .about-card h3 {
+            font-size: 1.4rem; margin-bottom: 1rem; color: #00ffff;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .about-card p { color: #ccc; line-height: 1.6; font-size: 0.95rem; }
+
+        .services-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem; margin-top: 3rem;
+        }
+
+        .service-card {
+            background: rgba(20, 10, 40, 0.6);
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            border-radius: 16px; padding: 2.5rem 2rem;
+            text-align: center;
+            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+        }
+        .service-card:hover {
+            transform: translateY(-8px);
+            border-color: #00ffff;
+            box-shadow: 0 10px 40px rgba(0, 255, 255, 0.15);
+        }
+        .service-card .icon { font-size: 3.5rem; margin-bottom: 1.5rem; display: block; }
+        .service-card h3 { font-size: 1.3rem; margin-bottom: 0.8rem; color: #fff; }
+        .service-card p { color: #aaa; font-size: 0.95rem; line-height: 1.5; }
+
+        .ai-section {
+            background: linear-gradient(180deg, rgba(138, 43, 226, 0.05) 0%, transparent 100%);
+            border-top: 1px solid rgba(138, 43, 226, 0.1);
+            border-bottom: 1px solid rgba(138, 43, 226, 0.1);
+            max-width: 100%; padding: 6rem 5%;
+        }
+        .ai-container { max-width: 1200px; margin: 0 auto; }
+
+        .ai-demo-wrapper {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 3rem; margin-top: 3rem; align-items: stretch;
+        }
+
+        .ai-form {
+            background: rgba(10, 10, 10, 0.8);
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            border-radius: 16px; padding: 2rem;
+        }
+
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label {
+            display: block; margin-bottom: 0.5rem;
+            color: #00ffff; font-size: 0.9rem; font-weight: 500;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 1rem;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px; color: #fff; font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none; border-color: #8a2be2;
+            box-shadow: 0 0 15px rgba(138, 43, 226, 0.3);
+        }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+
+        .ai-output {
+            background: rgba(10, 10, 10, 0.8);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 16px; padding: 2rem;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            min-height: 450px; position: relative; overflow: hidden;
+        }
+
+        .ai-output-placeholder { text-align: center; color: #666; }
+        .ai-output-placeholder .icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+
+        .loader-mini {
+            position: relative; width: 120px; height: 120px;
+            display: flex; justify-content: center; align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .loader-mini .ring {
+            position: absolute; border-radius: 50%; border: 2px solid transparent;
+        }
+        .loader-mini .ring-1 {
+            width: 100%; height: 100%;
+            border-top-color: #8a2be2; border-bottom-color: #8a2be2;
+            animation: spin 2s linear infinite;
+        }
+        .loader-mini .ring-2 {
+            width: 75%; height: 75%;
+            border-left-color: #00ffff; border-right-color: #00ffff;
+            animation: spin 1.5s linear infinite reverse;
+        }
+        .loader-mini .ring-3 {
+            width: 50%; height: 50%;
+            border-top-color: #fff; border-bottom-color: #fff;
+            animation: spin 1s linear infinite;
+        }
+        .loader-mini .core {
+            width: 20%; height: 20%; background: #000;
+            border-radius: 50%; box-shadow: 0 0 20px #8a2be2;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .loader-text { color: #00ffff; font-weight: 500; margin-bottom: 0.5rem; }
+        .loader-subtext { color: #666; font-size: 0.9rem; }
+
+        .result-card {
+            text-align: center; width: 100%;
+            animation: fadeIn 0.6s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-image-placeholder {
+            width: 100%; height: 200px;
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(0, 255, 255, 0.1));
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            font-size: 4rem;
+        }
+
+        .result-info {
+            background: rgba(138, 43, 226, 0.1);
+            padding: 1rem; border-radius: 8px;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            margin-bottom: 1rem;
+        }
+        .result-info p { color: #ccc; font-size: 0.95rem; line-height: 1.6; }
+        .result-info .highlight { color: #00ffff; font-weight: 600; }
+
+        .result-products {
+            background: rgba(0, 255, 255, 0.05);
+            padding: 1rem; border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            text-align: left;
+        }
+        .result-products h4 { color: #00ffff; margin-bottom: 0.8rem; font-size: 0.95rem; }
+
+        .product-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.7rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.95rem;
+        }
+        .product-item:last-child { border-bottom: none; }
+        .product-name { color: #fff; font-weight: 500; }
+        .product-type { color: #8a2be2; font-size: 0.85rem; }
+
+        .error-box {
+            text-align: center; color: #ff6b6b;
+            padding: 2rem;
+        }
+        .error-box .icon { font-size: 3rem; margin-bottom: 1rem; }
+
+        footer {
+            text-align: center; padding: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: #555; font-size: 0.9rem;
+            position: relative; z-index: 1;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .black-hole-container { width: 300px; height: 300px; }
+            .black-hole { width: 150px; height: 150px; }
+            .ai-demo-wrapper { grid-template-columns: 1fr; }
+            .about-cards { grid-template-columns: 1fr; }
+            .services-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 480px) {
+            .services-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+
+    <nav>
+        <div class="nav-container">
+            <div class="logo">BLACK HOLE</div>
+            <ul class="nav-links">
+                <li><a href="#home">Главная</a></li>
+                <li><a href="#about">О нас</a></li>
+                <li><a href="#services">Услуги</a></li>
+                <li><a href="#ai-design">AI Дизайн</a></li>
+                <li><a href="#contact">Контакты</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="hero" id="home">
+        <h1>Мы создаём цифровые вселенные</h1>
+        <p>Погрузись в бесконечность креатива</p>
+        <a href="#ai-design" class="btn-primary">Начать проект</a>
+
+        <div class="black-hole-container">
+            <div class="black-hole">
+                <div class="accretion-disk">
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                    <div class="particle"></div>
+                </div>
+                <div class="black-hole-core"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="about">
+        <h2 class="section-title">О нашей студии</h2>
+        <p class="about-intro">
+            Мы создаём уникальные цифровые решения, которые затягивают как чёрная дыра.
+            Наши проекты поглощают внимание пользователей и не отпускают.
+        </p>
+        <div class="about-cards">
+            <div class="about-card">
+                <h3>🚀 Инновации</h3>
+                <p>Используем передовые технологии AI и машинного обучения для создания уникальных продуктов</p>
+            </div>
+            <div class="about-card">
+                <h3>🎨 Креатив</h3>
+                <p>Каждый проект — это произведение искусства, созданное с душой и вниманием к деталям</p>
+            </div>
+            <div class="about-card">
+                <h3>⚡ Скорость</h3>
+                <p>Быстрая разработка без потери качества. Ваш проект будет готов в срок</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="services">
+        <h2 class="section-title">Услуги</h2>
+        <div class="services-grid">
+            <div class="service-card">
+                <span class="icon">💻</span>
+                <h3>Веб-разработка</h3>
+                <p>Создание современных веб-приложений и сайтов</p>
+            </div>
+            <div class="service-card">
+                <span class="icon">🎨</span>
+                <h3>Дизайн</h3>
+                <p>UI/UX дизайн, который покоряет пользователей</p>
+            </div>
+            <div class="service-card">
+                <span class="icon">✨</span>
+                <h3>Брендинг</h3>
+                <p>Создание уникальной идентичности вашего бренда</p>
+            </div>
+            <div class="service-card">
+                <span class="icon">🤖</span>
+                <h3>AI Решения</h3>
+                <p>Интеграция искусственного интеллекта в ваш бизнес</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="ai-section" id="ai-design">
+        <div class="ai-container">
+            <h2 class="section-title">AI Дизайн Интерьера</h2>
+            <p class="section-subtitle">
+                Опишите параметры комнаты — нейросеть сгенерирует дизайн и подберёт мебель с ссылками на магазины
+            </p>
+
+            <div class="ai-demo-wrapper">
+                <div class="ai-form">
+                    <div class="form-group">
+                        <label>Площадь комнаты (м²)</label>
+                        <input type="number" id="room-area" placeholder="20" min="5" max="500">
+                    </div>
+                    <div class="form-group">
+                        <label>Высота потолков (м)</label>
+                        <input type="number" id="room-height" placeholder="2.7" step="0.1" min="2" max="5">
+                    </div>
+                    <div class="form-group">
+                        <label>Стиль интерьера</label>
+                        <select id="room-style">
+                            <option value="scandi">Скандинавский</option>
+                            <option value="loft">Лофт</option>
+                            <option value="minimal">Минимализм</option>
+                            <option value="classic">Неоклассика</option>
+                            <option value="modern">Современный</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Пожелания</label>
+                        <textarea id="room-desc" rows="3" placeholder="Светлая гостиная, много дерева, большой диван..."></textarea>
+                    </div>
+                    <button class="btn-primary" id="generate-btn" style="width: 100%;" onclick="generateAI()">
+                        Сгенерировать дизайн
+                    </button>
+                </div>
+
+                <div class="ai-output" id="ai-output">
+                    <div class="ai-output-placeholder">
+                        <div class="icon">🌌</div>
+                        <p>Здесь появится результат генерации</p>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem; color: #444;">
+                            Заполните форму слева и нажмите кнопку
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 Black Hole Studio. Все права защищены.</p>
+    </footer>
+
+    <script>
+        // Плавный скролл
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) target.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        // Адрес бэкенда
+        const API_URL = '';
+
+        async function generateAI() {
+            const output = document.getElementById('ai-output');
+            const btn = document.getElementById('generate-btn');
+            const area = document.getElementById('room-area').value || '20';
+            const height = document.getElementById('room-height').value || '2.7';
+            const styleSelect = document.getElementById('room-style');
+            const style = styleSelect.options[styleSelect.selectedIndex].text;
+            const desc = document.getElementById('room-desc').value || 'Уютное пространство';
+
+            // Блокируем кнопку на время генерации
+            btn.disabled = true;
+            btn.textContent = 'Генерация...';
+
+            // Этап 1: Погружение в нейросеть
+            output.innerHTML = `
+                <div class="loader-mini">
+                    <div class="ring ring-1"></div>
+                    <div class="ring ring-2"></div>
+                    <div class="ring ring-3"></div>
+                    <div class="core"></div>
+                </div>
+                <p class="loader-text">Погружение в нейросеть...</p>
+                <p class="loader-subtext">Phi-3.5 анализирует метрики комнаты</p>
+            `;
+
+            try {
+                const response = await fetch(`${API_URL}/generate-design`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        area: parseFloat(area),
+                        height: parseFloat(height),
+                        style: style,
+                        description: desc
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({ detail: 'Неизвестная ошибка' }));
+                    throw new Error(err.detail || 'Ошибка генерации');
+                }
+
+                const data = await response.json();
+
+                // Этап 2: Парсинг JSON из ответа модели
+                let furniture = [];
+                let rawText = data.response || '';
+
+                try {
+                    // Ищем JSON-объект в тексте ответа
+                    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        const parsed = JSON.parse(jsonMatch[0]);
+                        furniture = Array.isArray(parsed.furniture) ? parsed.furniture : [];
+                    }
+                } catch (e) {
+                    console.warn('Не удалось распарсить JSON:', e);
+                }
+
+                // Этап 3: Формируем список товаров
+                let productsHTML = '';
+                if (furniture.length > 0) {
+                    productsHTML = furniture.map(item => `
+                        <div class="product-item">
+                            <span class="product-name">${escapeHtml(item.item || 'Предмет')}</span>
+                            <span class="product-type">${escapeHtml(item.type || '')}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    productsHTML = '<p style="color: #888; font-size: 0.9rem;">Не удалось распознать мебель. Попробуйте ещё раз.</p>';
+                }
+
+                const timeSec = data.time ? (data.time / 1e9).toFixed(1) : '—';
+
+                output.innerHTML = `
+                    <div class="result-card">
+                        <div class="result-image-placeholder"></div>
+                        <h3 style="color: #fff; margin-bottom: 1rem; font-size: 1.3rem;">
+                            Дизайн сгенерирован!
+                        </h3>
+                        <div class="result-info">
+                            <p>
+                                Стиль: <span class="highlight">${escapeHtml(style)}</span><br>
+                                Площадь: <span class="highlight">${escapeHtml(area)} м²</span> •
+                                Потолки: <span class="highlight">${escapeHtml(height)} м</span><br>
+                                <span style="color: #888; font-size: 0.85rem;">${escapeHtml(desc)}</span>
+                            </p>
+                        </div>
+                        <div class="result-products">
+                            <h4>🛒 Подборка мебели от AI</h4>
+                            ${productsHTML}
+                        </div>
+                        <p style="color: #666; font-size: 0.8rem; margin-top: 1rem;">
+                            Модель: ${data.model || 'phi3.5'} • Время: ${timeSec} сек
+                        </p>
+                    </div>
+                `;
+
+            } catch (error) {
+                output.innerHTML = `
+                    <div class="error-box">
+                        <div class="icon">⚠️</div>
+                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">${escapeHtml(error.message)}</p>
+                        <p style="font-size: 0.9rem; color: #888;">
+                            Убедитесь, что бэкенд запущен:<br>
+                            <code style="color: #00ffff;">cd ~/black-hole-ai/backend && source venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port 8000</code>
+                        </p>
+                    </div>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Сгенерировать дизайн';
+            }
+        }
+
+        // Экранирование HTML для безопасности
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    </script>
+</body>
+</html>
