@@ -585,9 +585,9 @@
                     productsHTML = '<p style="color: #888; font-size: 0.9rem;">Не удалось распознать мебель. Попробуйте ещё раз.</p>';
                 }
 
-                const timeSec = data.time ? (data.time / 1e9).toFixed(1) : '—';
-
-                output.innerHTML = `
+		const timeSec = typeof data.time === 'number' && data.time > 0 ? (data.time / 1e9).toFixed(1) : '—';
+                
+		output.innerHTML = `
                     <div class="result-card">
                         <div class="result-image-placeholder"></div>
                         <h3 style="color: #fff; margin-bottom: 1rem; font-size: 1.3rem;">

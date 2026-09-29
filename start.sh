@@ -1,27 +1,23 @@
 #!/bin/bash
+set -e
+cd ~/black-hole-ai
 echo "🚀 Запуск Black Hole Studio AI..."
-
-# Запуск Docker (Ollama)
-echo " Запуск Ollama..."
+echo "⚙️  Запуск Ollama (Docker)..."
 docker-compose up -d
-
-# Запуск бэкенда в фоне
-echo "⚙️ Запуск бэкенда..."
-cd backend
-source venv/bin/activate
+sleep 3
+if docker ps | grep -q ollama-bhs; then echo "✅ Ollama запущена"; else echo "❌ Ошибка запуска Docker"; exit 1; fi
+echo "⚙️  Запуск бэкенда (FastAPI)..."
+cd backend && source venv/bin/activate
+pkill -f "uvicorn main:app" 2>/dev/null || true
 nohup uvicorn main:app --host 0.0.0.0 --port 8000 > ../backend.log 2>&1 &
-BACKEND_PID=$!
+sleep 2
+if curl -s http://localhost:8000/health > /dev/null; then echo "✅ Бэкенд запущен"; else echo " Ошибка запуска бэкенда. Проверь backend.log"; exit 1; fi
 cd ..
-
-# Запуск фронтенда в фоне
-echo "📁 Запуск фронтенда..."
-nohup python3 -m http.server 3000 > frontend.log 2>&1 &
-FRONTEND_PID=$!
-
-echo "✅ Всё запущено!"
-echo "   Фронтенд: http://localhost:3000/web2.html"
-echo "   API: http://localhost:8000/docs"
-echo "   PID бэкенда: $BACKEND_PID"
-echo "   PID фронтенда: $FRONTEND_PID"
-echo ""
-echo "Для остановки: ./stop.sh"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "✅ ВСЁ ЗАПУЩЕНО!"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo " Сайт:     http://localhost:8000/"
+echo "📍 API Docs: http://localhost:8000/docs"
+echo " Health:   http://localhost:8000/health"
+echo "💡 Для туннеля:   npx localtunnel --port 8000"
+echo "💡 Для остановки: ./stop.sh"
