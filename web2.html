@@ -1,643 +1,1229 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Black Hole Studio — AI Interior Design</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Black Hole Studio</title>
+<script src="/libs/three.min.js"></script>
+<script src="/libs/OrbitControls.js"></script>
+<script src="/static/plan2d.js"></script>
+<script src="/static/photo-studio.js"></script>
+<script src="/static/room-photo.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Roboto,sans-serif;background:#0a0a0a;color:#fff;overflow-x:hidden}
+.bg-grid{position:fixed;top:0;left:0;width:100%;height:100%;background-image:linear-gradient(rgba(138,43,226,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(138,43,226,0.03) 1px,transparent 1px);background-size:50px 50px;z-index:0;pointer-events:none}
+nav{position:fixed;top:0;width:100%;background:rgba(10,10,10,0.95);backdrop-filter:blur(10px);border-bottom:1px solid rgba(138,43,226,0.2);z-index:1000;padding:1rem 5%}
+.nav-container{max-width:1400px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:1.5rem;font-weight:800;letter-spacing:2px;background:linear-gradient(90deg,#8a2be2,#00ffff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-links{display:flex;gap:2rem;list-style:none;align-items:center}
+.nav-links a{color:#ccc;text-decoration:none;font-size:0.95rem;cursor:pointer}
+.nav-links a:hover{color:#00ffff}
+.user-selector{display:flex;align-items:center;gap:0.8rem}
+.user-select,.btn-add-user{padding:0.6rem 1rem;background:rgba(138,43,226,0.2);border:1px solid rgba(138,43,226,0.4);border-radius:8px;color:#fff;font-size:0.9rem;cursor:pointer}
+.btn-add-user:hover{background:rgba(0,255,255,0.3)}
+.hero{height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0 5%}
+.hero h1{font-size:clamp(2.5rem,6vw,5rem);font-weight:800;margin-bottom:1.5rem;background:linear-gradient(135deg,#fff 0%,#8a2be2 50%,#00ffff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:clamp(1.1rem,2vw,1.5rem);color:#aaa;margin-bottom:3rem}
+.btn-primary{padding:1rem 3rem;font-size:1.1rem;font-weight:600;background:linear-gradient(90deg,#8a2be2,#00ffff);color:#000;border:none;border-radius:50px;cursor:pointer;transition:transform 0.3s}
+.btn-primary:hover{transform:translateY(-3px) scale(1.02)}
+.btn-primary:disabled{opacity:0.6;cursor:not-allowed}
+.btn-secondary,.btn-danger,.btn-icon,.btn-export,.btn-search{padding:0.6rem 1.2rem;font-size:0.85rem;font-weight:500;color:#fff;border-radius:8px;cursor:pointer;border:1px solid;display:inline-flex;align-items:center;gap:0.4rem;text-decoration:none}
+.btn-secondary{background:rgba(138,43,226,0.2);border-color:rgba(138,43,226,0.4)}
+.btn-danger{background:rgba(255,50,50,0.2);border-color:rgba(255,50,50,0.4)}
+.btn-icon{background:rgba(255,50,50,0.15);border-color:rgba(255,50,50,0.3);color:#ff6b6b}
+.btn-export{background:rgba(0,255,255,0.15);border-color:rgba(0,255,255,0.4);color:#00ffff}
+.btn-search{background:rgba(255,165,0,0.15);border-color:rgba(255,165,0,0.4);color:#ffa500}
+.btn-search:hover{background:rgba(255,165,0,0.3)}
+section{padding:6rem 5%;max-width:1400px;margin:0 auto}
+.section-title{font-size:clamp(2rem,4vw,3rem);font-weight:700;text-align:center;margin-bottom:1.5rem;background:linear-gradient(90deg,#8a2be2,#00ffff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.section-subtitle{text-align:center;color:#888;font-size:1.1rem;max-width:700px;margin:0 auto 3rem}
+.ai-section{background:linear-gradient(180deg,rgba(138,43,226,0.05) 0%,transparent 100%);border-top:1px solid rgba(138,43,226,0.1);border-bottom:1px solid rgba(138,43,226,0.1);max-width:100%;padding:6rem 5%}
+.ai-container{max-width:1200px;margin:0 auto}
+.ai-demo-wrapper{display:grid;grid-template-columns:1fr 1fr;gap:3rem;margin-top:3rem}
+.ai-form{background:rgba(10,10,10,0.8);border:1px solid rgba(138,43,226,0.3);border-radius:16px;padding:2rem}
+.templates-label{display:block;margin-bottom:0.8rem;color:#00ffff;font-size:0.9rem;font-weight:500}
+.templates-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:0.6rem;margin-bottom:1.5rem}
+.template-btn{padding:0.8rem;background:rgba(138,43,226,0.15);border:1px solid rgba(138,43,226,0.4);border-radius:8px;color:#fff;cursor:pointer;font-size:0.9rem;text-align:left}
+.template-btn:hover{background:rgba(138,43,226,0.3);border-color:#00ffff}
+.template-btn.active{background:rgba(0,255,255,0.2);border-color:#00ffff;box-shadow:0 0 15px rgba(0,255,255,0.3)}
+.form-group{margin-bottom:1.5rem}
+.form-group label{display:block;margin-bottom:0.5rem;color:#00ffff;font-size:0.9rem;font-weight:500}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:1rem;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;font-size:1rem}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#8a2be2}
+.form-group textarea{resize:vertical;min-height:80px}
+.ai-output{background:rgba(10,10,10,0.8);border:1px solid rgba(0,255,255,0.3);border-radius:16px;padding:2rem;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:450px}
+.ai-output-placeholder{text-align:center;color:#666}
+.loader-mini{position:relative;width:80px;height:80px;display:flex;justify-content:center;align-items:center;margin-bottom:1.5rem}
+.loader-mini .ring{position:absolute;border-radius:50%;border:2px solid transparent}
+.loader-mini .ring-1{width:100%;height:100%;border-top-color:#8a2be2;border-bottom-color:#8a2be2;animation:spin 2s linear infinite}
+.loader-mini .ring-2{width:75%;height:75%;border-left-color:#00ffff;border-right-color:#00ffff;animation:spin 1.5s linear infinite reverse}
+.loader-mini .core{width:20%;height:20%;background:#000;border-radius:50%;box-shadow:0 0 20px #8a2be2}
+@keyframes spin{100%{transform:rotate(360deg)}}
+.loader-text{color:#00ffff;font-weight:500;margin-bottom:0.5rem}
+.progress-container{width:100%;max-width:400px;margin:1rem auto}
+.progress-bar{width:100%;height:8px;background:rgba(138,43,226,0.2);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#8a2be2,#00ffff);width:0%;transition:width 0.5s}
+.progress-steps{display:flex;justify-content:space-between;margin-top:0.8rem;font-size:0.8rem;color:#666}
+.progress-step.active{color:#00ffff;font-weight:600}
+.progress-step.done{color:#00ff88}
+.result-card{text-align:center;width:100%;animation:fadeIn 0.6s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.result-info{background:rgba(138,43,226,0.1);padding:1rem;border-radius:8px;border:1px solid rgba(138,43,226,0.3);margin-bottom:1rem}
+.result-info p{color:#ccc;font-size:0.95rem;line-height:1.6}
+.result-info .highlight{color:#00ffff;font-weight:600}
+.generated-image{width:100%;max-height:400px;object-fit:cover;border-radius:12px;margin-bottom:1rem;border:2px solid rgba(0,255,255,0.3)}
+.room-3d-container{width:100%;height:500px;background:linear-gradient(135deg,#0f0c29 0%,#1a1a3e 50%,#24243e 100%);border:2px solid rgba(138,43,226,0.5);border-radius:12px;position:relative;overflow:hidden;margin-bottom:1rem}
+.room-3d-header{position:absolute;top:0;left:0;right:0;padding:12px 20px;background:linear-gradient(180deg,rgba(10,10,20,0.9) 0%,transparent 100%);display:flex;justify-content:space-between;align-items:center;z-index:10;pointer-events:none}
+.room-3d-title{color:#00ffff;font-size:1rem;font-weight:600}
+.room-3d-controls{color:#888;font-size:0.8rem}
+.furniture-tooltip{position:fixed;background:rgba(10,10,20,0.98);border:1px solid #00ffff;border-radius:10px;padding:1rem;min-width:280px;pointer-events:auto;opacity:0;transition:opacity 0.3s;z-index:1000;box-shadow:0 8px 32px rgba(0,255,255,0.3)}
+.furniture-tooltip.visible{opacity:1}
+.furniture-tooltip.pinned{border-color:#ffa500;box-shadow:0 8px 32px rgba(255,165,0,0.3)}
+.tooltip-header{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;padding-bottom:0.5rem;border-bottom:1px solid rgba(138,43,226,0.3)}
+.tooltip-icon{font-size:1.5rem}
+.tooltip-title{color:#00ffff;font-weight:700;font-size:1rem}
+.tooltip-type{color:#8a2be2;font-size:0.8rem;margin-left:auto}
+.tooltip-desc{color:#ccc;font-size:0.85rem;margin-bottom:0.8rem;line-height:1.4}
+.tooltip-specs{display:flex;flex-direction:column;gap:0.4rem}
+.tooltip-spec{display:flex;align-items:center;gap:0.5rem;font-size:0.85rem}
+.tooltip-spec-icon{font-size:1rem}
+.tooltip-spec-label{color:#888}
+.tooltip-spec-value{color:#fff;font-weight:600;margin-left:auto}
+.tooltip-spec-value.price{color:#00ff88}
+.tooltip-close{position:absolute;top:8px;right:8px;background:none;border:none;color:#888;font-size:1.2rem;cursor:pointer}
+.tooltip-close:hover{color:#fff}
+.result-products{background:rgba(0,255,255,0.05);padding:1rem;border-radius:8px;border:1px solid rgba(0,255,255,0.2);text-align:left;margin-bottom:1.5rem}
+.result-products h4{color:#00ffff;margin-bottom:0.8rem;font-size:0.95rem}
+.product-item{padding:1rem 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.product-item:last-child{border-bottom:none}
+.product-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.5rem}
+.product-name{color:#fff;font-weight:500;font-size:1rem}
+.product-type{color:#8a2be2;font-size:0.85rem}
+.product-desc{color:#aaa;font-size:0.9rem;margin-bottom:0.5rem}
+.product-details{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center}
+.product-detail{font-size:0.8rem;padding:0.3rem 0.6rem;border-radius:4px}
+.product-detail.price{color:#00ff88;background:rgba(0,255,136,0.15)}
+.product-detail.materials{color:#ffaa00;background:rgba(255,170,0,0.15)}
+.product-detail.dimensions{color:#00aaff;background:rgba(0,170,255,0.15)}
+.error-box{text-align:center;color:#ff6b6b;padding:2rem}
+.history-section{max-width:1200px;margin:3rem auto 0;padding:0 5%}
+.history-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+.history-title{font-size:1.5rem;font-weight:700;color:#00ffff}
+.history-count{background:rgba(138,43,226,0.3);padding:0.3rem 0.8rem;border-radius:20px;font-size:0.85rem;color:#fff}
+.history-list{display:grid;gap:1rem}
+.history-item{background:rgba(10,10,10,0.8);border:1px solid rgba(138,43,226,0.3);border-radius:12px;padding:1.2rem;display:flex;justify-content:space-between;align-items:center;transition:all 0.3s}
+.history-item:hover{border-color:#00ffff;transform:translateX(5px)}
+.history-item-info{flex:1}
+.history-item-title{font-weight:600;color:#fff;margin-bottom:0.3rem}
+.history-item-meta{font-size:0.85rem;color:#888}
+.history-item-actions{display:flex;gap:0.5rem}
+.history-empty{text-align:center;padding:3rem;color:#666;border:2px dashed rgba(138,43,226,0.3);border-radius:12px}
+.search-section{max-width:1200px;margin:3rem auto;padding:0 5%}
+.search-container{background:rgba(10,10,10,0.8);border:1px solid rgba(255,165,0,0.3);border-radius:16px;padding:2rem}
+.search-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem}
+.search-title{color:#ffa500;font-size:1.3rem;font-weight:700}
+.search-input-wrapper{display:flex;gap:0.8rem;margin-bottom:1rem}
+.search-input{flex:1;padding:1rem;background:rgba(0,0,0,0.5);border:1px solid rgba(255,165,0,0.3);border-radius:8px;color:#fff;font-size:1rem}
+.search-input:focus{outline:none;border-color:#ffa500}
+.btn-search-main{padding:1rem 2rem;background:linear-gradient(90deg,#ff8c00,#ffa500);color:#000;border:none;border-radius:8px;font-weight:600;cursor:pointer;transition:transform 0.3s}
+.btn-search-main:hover{transform:scale(1.02)}
+.btn-search-main:disabled{opacity:0.6;cursor:not-allowed}
+.search-results{display:grid;gap:1rem;margin-top:1rem}
+.search-result-item{background:rgba(255,165,0,0.05);border:1px solid rgba(255,165,0,0.2);border-radius:10px;padding:1rem;transition:all 0.3s}
+.search-result-item:hover{border-color:#ffa500;background:rgba(255,165,0,0.1)}
+.search-result-title{color:#ffa500;font-weight:600;margin-bottom:0.3rem}
+.search-result-title a{color:#ffa500;text-decoration:none}
+.search-result-title a:hover{text-decoration:underline}
+.search-result-text{color:#aaa;font-size:0.9rem;line-height:1.4}
+.search-result-link{display:inline-block;margin-top:0.5rem;color:#00ffff;font-size:0.85rem;text-decoration:none}
+.search-result-link:hover{text-decoration:underline}
+.search-empty{text-align:center;padding:2rem;color:#666}
+.search-loader{text-align:center;padding:2rem;color:#ffa500}
+footer{text-align:center;padding:2rem;border-top:1px solid rgba(255,255,255,0.05);color:#555;font-size:0.9rem}
+.logo{background-size:200% auto;animation:logo-shift 4s linear infinite}
+@keyframes logo-shift{0%{background-position:0% center}100%{background-position:200% center}}
+.hero h1{animation:fade-up .9s ease both}.hero p{animation:fade-up .9s ease .2s both}.hero .btn-primary{animation:fade-up .9s ease .4s both}
+@keyframes fade-up{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
 
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: #0a0a0a;
-            color: #ffffff;
-            overflow-x: hidden;
-        }
+@media (prefers-reduced-motion: reduce){.logo,.loader-mini .ring,.hero h1,.hero p,.hero .btn-primary,.hero::before{animation:none!important}}
+.hero{position:relative;isolation:isolate}
+.hero::before{
+  content:'';position:absolute;
+  top:-180px; right:-120px;
+  width:400px; height:400px; border-radius:50%;
+  background:radial-gradient(circle at 50% 50%,
+     #000 0%, #000 23%,
+     #05010f 27%, #14003a 33%,
+     #00d0ff 41%,
+     #7a22cc 51%,
+     #3d1566 61%,
+     rgba(90,24,154,0.35) 72%,
+     rgba(0,180,255,0.12) 82%,
+     transparent 92%);
+  filter:blur(4px);
+  box-shadow:0 0 70px rgba(138,43,226,.45), 0 0 130px rgba(0,200,255,.22);
+  z-index:-1; pointer-events:none;
+  animation:bhBHole 6s ease-in-out infinite;
+}
+@keyframes bhBHole{0%,100%{opacity:.92;transform:scale(1)}50%{opacity:1;transform:scale(1.035)}}
 
-        .bg-grid {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image:
-                linear-gradient(rgba(138, 43, 226, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(138, 43, 226, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        nav {
-            position: fixed; top: 0; width: 100%;
-            background: rgba(10, 10, 10, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(138, 43, 226, 0.2);
-            z-index: 1000;
-            padding: 1rem 5%;
-        }
-
-        .nav-container {
-            max-width: 1400px; margin: 0 auto;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-
-        .logo {
-            font-size: 1.5rem; font-weight: 800; letter-spacing: 2px;
-            background: linear-gradient(90deg, #8a2be2, #00ffff);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-
-        .nav-links { display: flex; gap: 2rem; list-style: none; }
-        .nav-links a {
-            color: #ccc; text-decoration: none; font-size: 0.95rem;
-            transition: color 0.3s;
-        }
-        .nav-links a:hover { color: #00ffff; }
-
-        .hero {
-            height: 100vh; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; text-align: center;
-            position: relative; z-index: 1; padding: 0 5%;
-        }
-
-        .hero h1 {
-            font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 800;
-            margin-bottom: 1.5rem;
-            background: linear-gradient(135deg, #ffffff 0%, #8a2be2 50%, #00ffff 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            animation: textGlow 3s ease-in-out infinite alternate;
-        }
-
-        @keyframes textGlow {
-            from { filter: drop-shadow(0 0 15px rgba(138, 43, 226, 0.3)); }
-            to { filter: drop-shadow(0 0 25px rgba(0, 255, 255, 0.4)); }
-        }
-
-        .hero p { font-size: clamp(1.1rem, 2vw, 1.5rem); color: #aaa; margin-bottom: 3rem; }
-
-        .btn-primary {
-            padding: 1rem 3rem; font-size: 1.1rem; font-weight: 600;
-            background: linear-gradient(90deg, #8a2be2, #00ffff);
-            color: #000; border: none; border-radius: 50px;
-            cursor: pointer; text-decoration: none;
-            transition: transform 0.3s, box-shadow 0.3s;
-            display: inline-block;
-        }
-        .btn-primary:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 10px 30px rgba(138, 43, 226, 0.5);
-        }
-        .btn-primary:disabled {
-            opacity: 0.6; cursor: not-allowed;
-            transform: none;
-        }
-
-        .black-hole-container {
-            position: relative; width: 400px; height: 400px;
-            margin: 4rem auto; display: flex;
-            justify-content: center; align-items: center;
-        }
-
-        .black-hole { position: relative; width: 200px; height: 200px; }
-
-        .black-hole-core {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 60px; height: 60px; background: #000;
-            border-radius: 50%;
-            box-shadow: 0 0 60px rgba(0, 0, 0, 1), 0 0 120px rgba(138, 43, 226, 0.5);
-            z-index: 10;
-        }
-
-        .accretion-disk {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 200px; height: 200px; border-radius: 50%;
-            background: radial-gradient(circle,
-                transparent 30%, rgba(255, 140, 0, 0.3) 40%,
-                rgba(138, 43, 226, 0.4) 50%, rgba(0, 255, 255, 0.2) 60%, transparent 70%);
-            animation: rotate 20s linear infinite;
-        }
-
-        .accretion-disk::before {
-            content: ''; position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 160px; height: 160px; border-radius: 50%;
-            background: radial-gradient(circle,
-                transparent 40%, rgba(255, 100, 0, 0.5) 50%,
-                rgba(138, 43, 226, 0.6) 60%, transparent 70%);
-            animation: rotate 15s linear infinite reverse;
-        }
-
-        .particle {
-            position: absolute; width: 4px; height: 4px;
-            background: #00ffff; border-radius: 50%;
-            box-shadow: 0 0 10px #00ffff;
-        }
-        .particle:nth-child(1) { top: 20%; left: 50%; animation: orbit 8s linear infinite; }
-        .particle:nth-child(2) { top: 50%; left: 80%; animation: orbit 10s linear infinite 1s; }
-        .particle:nth-child(3) { top: 80%; left: 50%; animation: orbit 12s linear infinite 2s; }
-        .particle:nth-child(4) { top: 50%; left: 20%; animation: orbit 9s linear infinite 0.5s; }
-
-        @keyframes rotate {
-            from { transform: translate(-50%, -50%) rotate(0deg); }
-            to { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-        @keyframes orbit {
-            0% { transform: rotate(0deg) translateX(100px) rotate(0deg); opacity: 1; }
-            100% { transform: rotate(360deg) translateX(100px) rotate(-360deg); opacity: 0.3; }
-        }
-
-        section {
-            padding: 6rem 5%; max-width: 1400px;
-            margin: 0 auto; position: relative; z-index: 1;
-        }
-
-        .section-title {
-            font-size: clamp(2rem, 4vw, 3rem); font-weight: 700;
-            text-align: center; margin-bottom: 1.5rem;
-            background: linear-gradient(90deg, #8a2be2, #00ffff);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-
-        .section-subtitle {
-            text-align: center; color: #888; font-size: 1.1rem;
-            max-width: 700px; margin: 0 auto 3rem auto;
-        }
-
-        .about-intro {
-            text-align: center; font-size: 1.15rem; color: #aaa;
-            max-width: 800px; margin: 0 auto 3rem auto; line-height: 1.7;
-        }
-
-        .about-cards {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem; margin-top: 3rem;
-        }
-
-        .about-card {
-            background: rgba(20, 10, 40, 0.6);
-            border: 1px solid rgba(138, 43, 226, 0.3);
-            border-radius: 16px; padding: 2rem;
-            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
-        }
-        .about-card:hover {
-            transform: translateY(-8px);
-            border-color: #00ffff;
-            box-shadow: 0 10px 40px rgba(0, 255, 255, 0.15);
-        }
-        .about-card h3 {
-            font-size: 1.4rem; margin-bottom: 1rem; color: #00ffff;
-            display: flex; align-items: center; gap: 0.5rem;
-        }
-        .about-card p { color: #ccc; line-height: 1.6; font-size: 0.95rem; }
-
-        .services-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem; margin-top: 3rem;
-        }
-
-        .service-card {
-            background: rgba(20, 10, 40, 0.6);
-            border: 1px solid rgba(138, 43, 226, 0.3);
-            border-radius: 16px; padding: 2.5rem 2rem;
-            text-align: center;
-            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
-        }
-        .service-card:hover {
-            transform: translateY(-8px);
-            border-color: #00ffff;
-            box-shadow: 0 10px 40px rgba(0, 255, 255, 0.15);
-        }
-        .service-card .icon { font-size: 3.5rem; margin-bottom: 1.5rem; display: block; }
-        .service-card h3 { font-size: 1.3rem; margin-bottom: 0.8rem; color: #fff; }
-        .service-card p { color: #aaa; font-size: 0.95rem; line-height: 1.5; }
-
-        .ai-section {
-            background: linear-gradient(180deg, rgba(138, 43, 226, 0.05) 0%, transparent 100%);
-            border-top: 1px solid rgba(138, 43, 226, 0.1);
-            border-bottom: 1px solid rgba(138, 43, 226, 0.1);
-            max-width: 100%; padding: 6rem 5%;
-        }
-        .ai-container { max-width: 1200px; margin: 0 auto; }
-
-        .ai-demo-wrapper {
-            display: grid; grid-template-columns: 1fr 1fr;
-            gap: 3rem; margin-top: 3rem; align-items: stretch;
-        }
-
-        .ai-form {
-            background: rgba(10, 10, 10, 0.8);
-            border: 1px solid rgba(138, 43, 226, 0.3);
-            border-radius: 16px; padding: 2rem;
-        }
-
-        .form-group { margin-bottom: 1.5rem; }
-        .form-group label {
-            display: block; margin-bottom: 0.5rem;
-            color: #00ffff; font-size: 0.9rem; font-weight: 500;
-        }
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%; padding: 1rem;
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px; color: #fff; font-size: 1rem;
-            font-family: inherit;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            outline: none; border-color: #8a2be2;
-            box-shadow: 0 0 15px rgba(138, 43, 226, 0.3);
-        }
-        .form-group textarea { resize: vertical; min-height: 80px; }
-
-        .ai-output {
-            background: rgba(10, 10, 10, 0.8);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            border-radius: 16px; padding: 2rem;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            min-height: 450px; position: relative; overflow: hidden;
-        }
-
-        .ai-output-placeholder { text-align: center; color: #666; }
-        .ai-output-placeholder .icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
-
-        .loader-mini {
-            position: relative; width: 120px; height: 120px;
-            display: flex; justify-content: center; align-items: center;
-            margin-bottom: 1.5rem;
-        }
-        .loader-mini .ring {
-            position: absolute; border-radius: 50%; border: 2px solid transparent;
-        }
-        .loader-mini .ring-1 {
-            width: 100%; height: 100%;
-            border-top-color: #8a2be2; border-bottom-color: #8a2be2;
-            animation: spin 2s linear infinite;
-        }
-        .loader-mini .ring-2 {
-            width: 75%; height: 75%;
-            border-left-color: #00ffff; border-right-color: #00ffff;
-            animation: spin 1.5s linear infinite reverse;
-        }
-        .loader-mini .ring-3 {
-            width: 50%; height: 50%;
-            border-top-color: #fff; border-bottom-color: #fff;
-            animation: spin 1s linear infinite;
-        }
-        .loader-mini .core {
-            width: 20%; height: 20%; background: #000;
-            border-radius: 50%; box-shadow: 0 0 20px #8a2be2;
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-
-        .loader-text { color: #00ffff; font-weight: 500; margin-bottom: 0.5rem; }
-        .loader-subtext { color: #666; font-size: 0.9rem; }
-
-        .result-card {
-            text-align: center; width: 100%;
-            animation: fadeIn 0.6s ease;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .result-image-placeholder {
-            width: 100%; height: 200px;
-            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(0, 255, 255, 0.1));
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            margin-bottom: 1.5rem;
-            border: 1px solid rgba(138, 43, 226, 0.3);
-            font-size: 4rem;
-        }
-
-        .result-info {
-            background: rgba(138, 43, 226, 0.1);
-            padding: 1rem; border-radius: 8px;
-            border: 1px solid rgba(138, 43, 226, 0.3);
-            margin-bottom: 1rem;
-        }
-        .result-info p { color: #ccc; font-size: 0.95rem; line-height: 1.6; }
-        .result-info .highlight { color: #00ffff; font-weight: 600; }
-
-        .result-products {
-            background: rgba(0, 255, 255, 0.05);
-            padding: 1rem; border-radius: 8px;
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            text-align: left;
-        }
-        .result-products h4 { color: #00ffff; margin-bottom: 0.8rem; font-size: 0.95rem; }
-
-        .product-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0.7rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 0.95rem;
-        }
-        .product-item:last-child { border-bottom: none; }
-        .product-name { color: #fff; font-weight: 500; }
-        .product-type { color: #8a2be2; font-size: 0.85rem; }
-
-        .error-box {
-            text-align: center; color: #ff6b6b;
-            padding: 2rem;
-        }
-        .error-box .icon { font-size: 3rem; margin-bottom: 1rem; }
-
-        footer {
-            text-align: center; padding: 2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            color: #555; font-size: 0.9rem;
-            position: relative; z-index: 1;
-        }
-
-        @media (max-width: 768px) {
-            .nav-links { display: none; }
-            .black-hole-container { width: 300px; height: 300px; }
-            .black-hole { width: 150px; height: 150px; }
-            .ai-demo-wrapper { grid-template-columns: 1fr; }
-            .about-cards { grid-template-columns: 1fr; }
-            .services-grid { grid-template-columns: 1fr 1fr; }
-        }
-        @media (max-width: 480px) {
-            .services-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+.how-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem}
+.how-step{background:rgba(20,10,40,.6);border:1px solid rgba(138,43,226,.3);border-radius:16px;padding:1.6rem}
+.how-num{display:inline-flex;width:36px;height:36px;border-radius:50%;align-items:center;justify-content:center;background:linear-gradient(135deg,#8a2be2,#00ffff);color:#000;font-weight:800;margin-bottom:1rem}
+.how-step h3{color:#00ffff;margin-bottom:.5rem;font-size:1.1rem}
+.how-step p{color:#aaa;font-size:.95rem;line-height:1.5}
+.ai-demo-wrapper{grid-template-columns:1fr;gap:2rem}
+.templates-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.rooms-editor{display:grid;gap:.6rem;margin-bottom:.6rem}
+.room-row{display:grid;grid-template-columns:1.4fr repeat(2,1fr) 80px 40px;gap:.6rem;align-items:end;background:rgba(0,0,0,.35);border:1px solid rgba(138,43,226,.25);border-radius:10px;padding:.7rem}
+.room-row label{display:block;font-size:.72rem;color:#888;margin-bottom:.25rem}
+.room-row input,.room-row select{width:100%;padding:.6rem;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:6px;color:#fff;font-size:.95rem}
+.room-row input:focus,.room-row select:focus{outline:none;border-color:#8a2be2}
+.room-area{color:#00ffff;font-weight:600;font-size:.9rem;white-space:nowrap;padding-bottom:.6rem;text-align:right}
+.room-remove{height:38px;background:rgba(255,50,50,.12);border:1px solid rgba(255,50,50,.3);color:#ff6b6b;border-radius:6px;cursor:pointer}
+.room-remove:disabled{opacity:.3;cursor:not-allowed}
+.rooms-toolbar{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.rooms-summary{color:#aaa;font-size:.9rem}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.ai-output{min-height:320px}
+.result-card{text-align:left}
+.result-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem;align-items:center;margin-bottom:1rem}
+.result-head h3{color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem}
+.chip{padding:.3rem .8rem;border-radius:20px;background:rgba(138,43,226,.2);border:1px solid rgba(138,43,226,.4);font-size:.85rem;color:#ddd}
+.budget-box{background:rgba(0,255,136,.05);border:1px solid rgba(0,255,136,.2);border-radius:10px;padding:1rem;margin-bottom:1rem}
+.budget-line{display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.6rem;color:#ccc;font-size:.92rem}
+.budget-ok{color:#00ff88}.budget-over{color:#ff6b6b}
+.progress-fill.over{background:linear-gradient(90deg,#ff8c00,#ff4d4d)}
+.room-tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin:1.2rem 0}
+.room-tab{padding:.6rem 1rem;background:rgba(138,43,226,.15);border:1px solid rgba(138,43,226,.4);border-radius:8px;color:#ddd;cursor:pointer;font-size:.9rem}
+.room-tab:hover{border-color:#00ffff}
+.room-tab.active{background:rgba(0,255,255,.15);border-color:#00ffff;color:#fff}
+.room-grid{display:grid;grid-template-columns:3fr 2fr;gap:1.2rem;margin-bottom:1rem}
+.room-grid .room-3d-container{height:460px;margin-bottom:.4rem}
+.room-side{display:flex;flex-direction:column;gap:1rem}
+.room-side .generated-image{margin-bottom:0}
+.panel{background:rgba(138,43,226,.08);border:1px solid rgba(138,43,226,.25);border-radius:10px;padding:1rem}
+.panel h4{color:#00ffff;font-size:.9rem;margin-bottom:.5rem}
+.panel p{color:#ccc;font-size:.92rem;line-height:1.55}
+.palette{display:flex;gap:.5rem;flex-wrap:wrap}
+.swatch{flex:1;min-width:64px}
+.swatch-color{height:48px;width:100%;border-radius:8px;border:1px solid rgba(255,255,255,.15);cursor:pointer;display:block}
+.swatch-color:hover{outline:2px solid #00ffff}
+.wall-color{display:flex;align-items:center;gap:.7rem;color:#ccc;font-size:.9rem}
+.wall-color input{width:52px;height:36px;border:1px solid rgba(255,255,255,.2);border-radius:6px;background:none;cursor:pointer;padding:0}
+.swatch-name{font-size:.75rem;color:#aaa;margin-top:.3rem}
+.swatch-hex{font-size:.7rem;color:#666;font-family:monospace}
+.shop-links{display:flex;gap:.35rem;flex-wrap:wrap;align-items:center}
+.shop-link{font-size:.75rem;padding:.25rem .55rem;border-radius:5px;background:rgba(0,255,255,.1);border:1px solid rgba(0,255,255,.3);color:#00ffff;text-decoration:none;white-space:nowrap}
+.shop-link:hover{background:rgba(0,255,255,.25)}
+.table-wrap{overflow-x:auto}
+.order-table{width:100%;border-collapse:collapse;font-size:.88rem;min-width:560px}
+.order-table th{text-align:left;color:#888;font-weight:500;padding:.5rem;border-bottom:1px solid rgba(255,255,255,.1)}
+.order-table td{padding:.6rem .5rem;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:top;color:#ddd}
+.order-table .num{text-align:right;white-space:nowrap}
+.order-group td{color:#b57bff;font-weight:600;padding-top:1rem}
+.order-total td{font-weight:700;color:#00ff88;font-size:1rem;border-bottom:none}
+.order-note{color:#777;font-size:.78rem}
+@media(max-width:900px){.room-grid{grid-template-columns:1fr}.nav-links li:not(.user-selector){display:none}.templates-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){section,.ai-section{padding:4rem 16px}nav{padding:.8rem 16px}.logo{font-size:1.1rem;letter-spacing:1px}.user-select,.btn-add-user{padding:.5rem .6rem;font-size:.8rem}.room-row{grid-template-columns:repeat(3,1fr)}.room-row .rt{grid-column:1/-1}.room-area{text-align:left;padding-bottom:0;align-self:center}.room-remove{grid-column:3}.form-row{grid-template-columns:1fr}.room-grid .room-3d-container{height:340px}.ai-form,.ai-output{padding:1.2rem}.history-section{padding:0}.history-item{flex-direction:column;align-items:flex-start;gap:.8rem}.search-input-wrapper{flex-direction:column}.search-section{padding:0 16px}}
+.room-wish{grid-column:1/-1}
+.room-wish input{font-size:.9rem}
+.room-wishes-note{color:#aaa;font-size:.85rem;margin:-.4rem 0 1rem}
+.view-toggle{display:inline-flex;border:1px solid rgba(138,43,226,.4);border-radius:10px;overflow:hidden;margin:1rem 0 .2rem}
+.view-toggle button{padding:.55rem 1.1rem;background:transparent;border:none;color:#bbb;cursor:pointer;font-size:.9rem}
+.view-toggle button.active{background:rgba(0,255,255,.15);color:#fff}
+.plan-wrap{background:#11111d;border:2px solid rgba(138,43,226,.5);border-radius:12px;padding:1rem;margin:1rem 0}
+.plan-svg{width:100%;height:auto;max-height:620px;display:block}
+.plan-floor{fill:#2b2418}
+.plan-wall{fill:none;stroke:#e9e2ff}
+.plan-room{cursor:pointer}
+.plan-room:hover .plan-floor{fill:#3a3020}
+.plan-room-name{fill:#00ffff;font-size:.3px;font-weight:700;text-anchor:middle}
+.plan-room-size{fill:#ccc;font-size:.2px;text-anchor:middle}
+.plan-label-bg{fill:rgba(17,17,29,.85);stroke:rgba(0,255,255,.35);stroke-width:.02px}
+.plan-item-label{fill:#fff;font-size:.17px;font-weight:600;text-anchor:middle;pointer-events:none}
+.vision-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem}
+.vision-status{color:#00ff88;font-size:.9rem;margin-bottom:1rem}
+.vision-status.warn{color:#ffb86b}
+.studio-section{max-width:1200px;margin:3rem auto;padding:0 5%}
+.studio-card{background:rgba(10,10,10,.8);border:1px solid rgba(0,255,255,.3);border-radius:16px;padding:2rem}
+.studio-drop{border:2px dashed rgba(0,255,255,.35);border-radius:12px;text-align:center;padding:2.5rem 1rem;color:#aaa;cursor:pointer}
+.studio-drop.over{background:rgba(0,255,255,.08)}
+.studio-grid{display:grid;grid-template-columns:3fr 2fr;gap:1.5rem}
+.studio-stage{position:relative;user-select:none;touch-action:none;cursor:crosshair;line-height:0}
+.studio-stage img{width:100%;border-radius:10px}
+.studio-sel{position:absolute;border:2px solid #00ffff;background:rgba(0,255,255,.15);box-shadow:0 0 0 9999px rgba(0,0,0,.35);border-radius:4px;pointer-events:none}
+.studio-side{display:flex;flex-direction:column;gap:1rem}
+.studio-side .panel{display:flex;flex-direction:column;gap:.6rem}
+.studio-side input,.studio-side select{width:100%;padding:.7rem;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:#fff;font-size:.95rem}
+.studio-custom{display:flex;gap:.5rem}
+.suggestion{display:flex;justify-content:space-between;align-items:center;gap:.8rem;background:rgba(0,0,0,.3);border:1px solid rgba(138,43,226,.3);border-radius:8px;padding:.7rem}
+.suggestion p{color:#aaa;font-size:.85rem;margin-top:.2rem}
+.studio-tools{display:flex;gap:.6rem;flex-wrap:wrap}
+#studio-work.busy button,#studio-work.busy .studio-stage{pointer-events:none;opacity:.55}
+.compare-box{position:relative;line-height:0}
+.compare-box img{width:100%;border-radius:10px}
+.compare-after{position:absolute;inset:0;clip-path:inset(0 0 0 50%)}
+.studio-compare input{width:100%}
+@media(max-width:900px){.studio-grid{grid-template-columns:1fr}}
+@media(max-width:640px){.studio-section{padding:0 16px}.studio-card{padding:1.2rem}}
+.room-photo{display:flex;flex-direction:column;gap:.5rem}
+.room-photo:empty{display:none}
+.photo-status{padding:2.2rem 1rem;text-align:center;border:1px dashed rgba(0,255,255,.35);border-radius:12px;color:#00ffff;font-size:.95rem}
+.photo-status.warn{color:#ffb86b;border-color:rgba(255,184,107,.4);padding:1rem}
+.photo-redo{align-self:flex-start;font-size:.8rem;padding:.4rem .8rem}
+.plan-window{stroke:#7fdbff}
+.plan-hidden-wall{stroke:#ff6b6b;stroke-width:.06px;stroke-dasharray:.18 .12}
+.plan-cam-cone{fill:rgba(255,204,51,.14);stroke:rgba(255,204,51,.65);stroke-width:.03px}
+.plan-cam-axis{stroke:rgba(255,204,51,.55);stroke-width:.025px;stroke-dasharray:.1 .08}
+.plan-cam-body{fill:#ffcc33;stroke:#11111d;stroke-width:.02px}
+.plan-cam{pointer-events:none}
+.plan-door line,.plan-door path{stroke:#e9e2ff;stroke-width:.03px;fill:none}
+.plan-door-gap{fill:#2b2418}
+.cam-schema-wrap{background:#11111d;border:1px solid rgba(255,204,51,.3);border-radius:10px;padding:.6rem}
+.cam-schema-box .plan-svg{max-height:200px}
+.room-zone{grid-column:1/-1;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.room-zone label{margin:0}
+.room-zone select{width:auto;min-width:170px}
+.presets-hint{color:#888;font-size:.82rem;margin:-1rem 0 1.2rem}
+.open-plan{display:flex;align-items:center;gap:.4rem;color:#ccc;font-size:.88rem;cursor:pointer}
+.open-plan input{accent-color:#00ffff;width:16px;height:16px}
+.plan-wall-line{stroke:#e9e2ff;stroke-width:.12px;stroke-linecap:square}
+.plan-zone{stroke:#e9e2ff;stroke-width:.03px;stroke-dasharray:.15 .12;opacity:.7}
+.plan-entrance line,.plan-entrance path{stroke:#00ff88;stroke-width:.04px;fill:none}
+.plan-entrance text{fill:#00ff88;font-size:.2px;font-weight:700;text-anchor:middle}
+.room-3d-tools{display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap}
+.plan-view-cam .plan-cam-cone{fill:rgba(0,255,255,.12);stroke:rgba(0,255,255,.7)}
+.plan-view-cam .plan-cam-body{fill:#00ffff}
+.ceiling-field{display:flex;align-items:center;gap:.5rem;color:#ccc;font-size:.88rem}
+.ceiling-field input{width:80px;padding:.45rem;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:6px;color:#fff;font-size:.95rem}
+</style>
 </head>
 <body>
-    <div class="bg-grid"></div>
+<div class="bg-grid"></div>
+<nav><div class="nav-container"><div class="logo">BLACK HOLE</div><ul class="nav-links"><li><a href="#home">Главная</a></li><li><a href="#about">Как это работает</a></li><li><a href="#ai-design">AI Дизайн</a></li><li><a href="#studio">Фото</a></li><li><a href="#search">Поиск</a></li><li class="user-selector"><select class="user-select" id="user-select" onchange="switchUser()"></select><button class="btn-add-user" onclick="addUser()">+ Пользователь</button></li></ul></div></nav>
+<section class="hero" id="home"><h1>Мы создаём цифровые вселенные</h1><p>Скинь обмеры квартиры — нейросеть нарисует дизайн и скажет, что и где заказать</p><a href="#ai-design" class="btn-primary">Начать проект</a></section>
+<section id="about"><h2 class="section-title">Как это работает</h2><p class="section-subtitle">От рулетки до корзины в магазине — за пару минут.</p><div class="how-grid"><div class="how-step"><div class="how-num">1</div><h3>📐 Обмеры</h3><p>Укажите помещения: длину, ширину, высоту потолков. Добавьте стиль, бюджет и пожелания.</p></div><div class="how-step"><div class="how-num">2</div><h3>🧠 Нейросеть проектирует</h3><p>LLM придумывает концепцию, палитру и подбирает мебель под размеры, Stable Diffusion рисует визуализацию, а 3D-схема показывает расстановку.</p></div><div class="how-step"><div class="how-num">3</div><h3>🛒 Смета и магазины</h3><p>Список того, что заказать: мебель, напольное покрытие, краска и плинтус с расчётом количества — и ссылки на магазины.</p></div></div></section>
+<section class="ai-section" id="ai-design"><div class="ai-container"><h2 class="section-title">AI Дизайн Интерьера</h2><p class="section-subtitle">Введите обмеры квартиры — нейросеть спроектирует интерьер, покажет 3D-расстановку и составит список покупок со ссылками на магазины</p><div class="ai-demo-wrapper"><div class="ai-form"><label class="templates-label">🏠 Быстрый старт</label><div class="templates-grid"><button type="button" class="template-btn" onclick="applyPreset('studio',this)">🏙️ Студия</button><button type="button" class="template-btn" onclick="applyPreset('one',this)">🚪 1-комн.</button><button type="button" class="template-btn" onclick="applyPreset('zoned',this)">🧩 1-комн. с зонами</button><button type="button" class="template-btn" onclick="applyPreset('two',this)">🏡 2-комн.</button><button type="button" class="template-btn" onclick="applyPreset('three',this)">🏢 3-комн.</button></div><p class="presets-hint">Кухня и санузел в пресетах уже есть — выберите число жилых комнат, остальное можно поменять ниже.</p><label class="templates-label">📐 Обмеры помещений</label><div class="vision-actions"><button type="button" class="btn-secondary" onclick="roomsFromImage('plan')">🗺️ Распознать план квартиры</button><button type="button" class="btn-secondary" onclick="roomsFromImage('photo')">📷 Обмерить комнату по фото</button></div><p class="vision-status" id="vision-status" hidden></p><div class="rooms-editor" id="rooms-editor"></div><div class="rooms-toolbar"><button type="button" class="btn-secondary" onclick="addRoom()">+ Добавить помещение</button><label class="ceiling-field">Высота потолков, м <input type="number" id="ceiling-height" value="2.7" step="0.05" min="2" max="5"></label><label class="open-plan"><input type="checkbox" id="open-plan"> Студия — общее пространство без стен между зонами</label><span class="rooms-summary" id="rooms-summary"></span></div><div class="form-row"><div class="form-group"><label>Стиль интерьера</label><select id="room-style"><option value="Скандинавский">Скандинавский</option><option value="Лофт">Лофт</option><option value="Минимализм">Минимализм</option><option value="Неоклассика">Неоклассика</option><option value="Современный">Современный</option><option value="Japandi">Japandi</option></select></div><div class="form-group"><label>Бюджет, ₽ (необязательно)</label><input type="number" id="room-budget" placeholder="500000" min="0" step="10000"></div></div><div class="form-group"><label>Общие пожелания ко всей квартире</label><textarea id="room-desc" rows="2" placeholder="Светлые тона, много дерева, есть кот..."></textarea></div><button class="btn-primary" id="generate-btn" style="width:100%" onclick="generateAI()">Сгенерировать дизайн</button></div><div class="ai-output" id="ai-output"><div class="ai-output-placeholder"><p style="font-size:3rem;margin-bottom:1rem">🌌</p><p>Здесь появится проект: визуализация, 3D-схема и смета</p></div></div></div><div class="history-section"><div class="history-header"><h3 class="history-title">📜 История генераций</h3><div style="display:flex;gap:0.8rem;align-items:center"><span class="history-count" id="history-count">0 записей</span><button class="btn-danger" onclick="clearHistory()">🗑️ Очистить всё</button></div></div><div class="history-list" id="history-list"><div class="history-empty"><p style="font-size:2rem;margin-bottom:0.5rem">📭</p><p>История пуста. Сгенерируйте первый дизайн!</p></div></div></div></div></section>
+<section class="studio-section" id="studio"><h2 class="section-title">Фото-студия</h2><p class="section-subtitle">Загрузите фото своей комнаты: выделите область — нейросеть подскажет, что там поменять, и перерисует только её. Или перерисуйте фото целиком: обставьте пустую комнату или смените стиль.</p>
+<div class="studio-card"><div class="studio-drop" id="studio-drop"><p style="font-size:3rem">🖼️</p><p>Перетащите фото сюда или нажмите, чтобы выбрать</p><p class="order-note">JPG/PNG, комната целиком или её часть</p></div>
+<div id="studio-work" hidden><div class="studio-grid"><div>
+<div class="studio-stage" id="studio-stage"><img id="studio-img" alt="Ваше фото" draggable="false"><div class="studio-sel" id="studio-sel" hidden></div></div>
+<p class="order-note">Зажмите и протяните мышью (или пальцем), чтобы выделить область.</p>
+<div class="studio-compare" id="studio-compare" hidden><p class="templates-label">До / после</p><div class="compare-box"><img id="studio-before" alt="До"><div class="compare-after" id="studio-after-wrap"><img id="studio-after" alt="После"></div></div><input type="range" min="0" max="100" value="50" oninput="studioCompare(this.value)" aria-label="Сравнение до и после"></div>
+</div><div class="studio-side">
+<div class="form-group"><label>Стиль</label><select id="studio-style"><option value="Скандинавский">Скандинавский</option><option value="Лофт">Лофт</option><option value="Минимализм">Минимализм</option><option value="Неоклассика">Неоклассика</option><option value="Современный" selected>Современный</option><option value="Japandi">Japandi</option></select></div>
+<div class="panel"><h4>✂️ Выделенная область</h4><button type="button" class="btn-secondary" id="studio-suggest" onclick="studioSuggest()" disabled>💡 Что здесь можно поменять?</button><div id="studio-suggestions"></div><div class="studio-custom"><input type="text" id="studio-prompt" maxlength="300" placeholder="Или опишите сами: светлый льняной диван"><button type="button" class="btn-secondary" id="studio-apply" onclick="studioApplyCustom()" disabled>Применить</button></div></div>
+<div class="panel"><h4>🪄 Всё фото</h4><div class="form-row"><select id="studio-mode"><option value="restyle">Сменить стиль и мебель</option><option value="furnish">Обставить пустую комнату</option></select><select id="studio-room"><option value="living">Гостиная</option><option value="bedroom">Спальня</option><option value="kitchen">Кухня</option><option value="office">Кабинет</option></select></div><input type="text" id="studio-restyle-prompt" maxlength="300" placeholder="Пожелания: угловой диван, много растений"><button type="button" class="btn-secondary" onclick="studioRestyle()">Перерисовать фото</button></div>
+<p class="loader-text" id="studio-status" hidden></p>
+<div class="studio-tools"><button type="button" class="btn-secondary" id="studio-undo" onclick="studioUndo()" disabled>↩️ Отменить</button><button type="button" class="btn-export" onclick="studioDownload()">📥 Скачать</button><button type="button" class="btn-secondary" onclick="pickFile(studioLoad)">🔄 Другое фото</button></div>
+</div></div></div></div></section>
+<section class="search-section" id="search"><div class="search-container"><div class="search-header"><span style="font-size:2rem">🔍</span><h2 class="search-title">Поиск мебели в DuckDuckGo</h2></div><p style="color:#888;margin-bottom:1.5rem">Найдите похожую мебель, сравните цены и найдите лучшие предложения</p><div class="search-input-wrapper"><input type="text" class="search-input" id="search-input" placeholder="Например: диван лофт купить" onkeypress="if(event.key==='Enter')doSearch()"><button class="btn-search-main" id="search-btn" onclick="doSearch()">🔍 Найти</button></div><div id="search-results-container"><div class="search-empty"><p style="font-size:3rem;margin-bottom:1rem">🔎</p><p>Введите запрос для поиска мебели</p></div></div></div></section>
+<footer><p>© 2026 Black Hole Studio. Все права защищены.</p></footer>
+<script>
+document.querySelectorAll('a[href^="#"]').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();var t=document.querySelector(this.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth'})})});
+var currentUserId=null,currentResult=null,pollingInterval=null,fixedTooltip=null;
 
-    <nav>
-        <div class="nav-container">
-            <div class="logo">BLACK HOLE</div>
-            <ul class="nav-links">
-                <li><a href="#home">Главная</a></li>
-                <li><a href="#about">О нас</a></li>
-                <li><a href="#services">Услуги</a></li>
-                <li><a href="#ai-design">AI Дизайн</a></li>
-                <li><a href="#contact">Контакты</a></li>
-            </ul>
-        </div>
-    </nav>
+function getIcon(t,n){t=(t||'').toLowerCase();n=(n||'').toLowerCase();if(t.indexOf('диван')!==-1||n.indexOf('диван')!==-1)return'🛋️';if(t.indexOf('кровать')!==-1||n.indexOf('кровать')!==-1)return'🛏️';if(t.indexOf('стол')!==-1||n.indexOf('стол')!==-1)return'🍽️';if(t.indexOf('стул')!==-1||t.indexOf('кресл')!==-1)return'🪑';if(t.indexOf('шкаф')!==-1)return'🗄️';if(t.indexOf('тумб')!==-1)return'🗃️';if(t.indexOf('телевизор')!==-1||t.indexOf('тв')!==-1)return'📺';if(t.indexOf('лампа')!==-1||t.indexOf('торшер')!==-1)return'💡';if(t.indexOf('стеллаж')!==-1||t.indexOf('полк')!==-1)return'📚';if(t.indexOf('кухн')!==-1)return'🍳';if(t.indexOf('статуя')!==-1||n.indexOf('коня')!==-1)return'🐎';return'📦'}
 
-    <section class="hero" id="home">
-        <h1>Мы создаём цифровые вселенные</h1>
-        <p>Погрузись в бесконечность креатива</p>
-        <a href="#ai-design" class="btn-primary">Начать проект</a>
+function loadUsers(){fetch('/users').then(function(r){return r.json()}).then(function(users){if(!Array.isArray(users))return;var s=document.getElementById('user-select');s.innerHTML=users.map(function(u){return'<option value="'+u.id+'">'+u.username+'</option>'}).join('');if(users.length>0&&!currentUserId)currentUserId=users[0].id;if(currentUserId)loadHistory()}).catch(function(e){console.error(e)})}
+function addUser(){var u=prompt('Имя пользователя:');if(!u)return;fetch('/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u})}).then(function(r){return r.json()}).then(function(user){currentUserId=user.id;loadUsers();document.getElementById('user-select').value=user.id;loadHistory()}).catch(function(e){console.error(e)})}
+function switchUser(){currentUserId=parseInt(document.getElementById('user-select').value);loadHistory()}
 
-        <div class="black-hole-container">
-            <div class="black-hole">
-                <div class="accretion-disk">
-                    <div class="particle"></div>
-                    <div class="particle"></div>
-                    <div class="particle"></div>
-                    <div class="particle"></div>
-                </div>
-                <div class="black-hole-core"></div>
-            </div>
-        </div>
-    </section>
+function formatPrice(p){if(!p)return'—';return new Intl.NumberFormat('ru-RU').format(Math.round(p))+' ₽'}
+function esc(t){if(!t)return'';return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
-    <section id="about">
-        <h2 class="section-title">О нашей студии</h2>
-        <p class="about-intro">
-            Мы создаём уникальные цифровые решения, которые затягивают как чёрная дыра.
-            Наши проекты поглощают внимание пользователей и не отпускают.
-        </p>
-        <div class="about-cards">
-            <div class="about-card">
-                <h3>🚀 Инновации</h3>
-                <p>Используем передовые технологии AI и машинного обучения для создания уникальных продуктов</p>
-            </div>
-            <div class="about-card">
-                <h3>🎨 Креатив</h3>
-                <p>Каждый проект — это произведение искусства, созданное с душой и вниманием к деталям</p>
-            </div>
-            <div class="about-card">
-                <h3>⚡ Скорость</h3>
-                <p>Быстрая разработка без потери качества. Ваш проект будет готов в срок</p>
-            </div>
-        </div>
-    </section>
+function searchFurniture(name,type){var q=name;document.getElementById('search-input').value=q;document.getElementById('search').scrollIntoView({behavior:'smooth'});setTimeout(doSearch,500)}
 
-    <section id="services">
-        <h2 class="section-title">Услуги</h2>
-        <div class="services-grid">
-            <div class="service-card">
-                <span class="icon">💻</span>
-                <h3>Веб-разработка</h3>
-                <p>Создание современных веб-приложений и сайтов</p>
-            </div>
-            <div class="service-card">
-                <span class="icon">🎨</span>
-                <h3>Дизайн</h3>
-                <p>UI/UX дизайн, который покоряет пользователей</p>
-            </div>
-            <div class="service-card">
-                <span class="icon">✨</span>
-                <h3>Брендинг</h3>
-                <p>Создание уникальной идентичности вашего бренда</p>
-            </div>
-            <div class="service-card">
-                <span class="icon">🤖</span>
-                <h3>AI Решения</h3>
-                <p>Интеграция искусственного интеллекта в ваш бизнес</p>
-            </div>
-        </div>
-    </section>
+function doSearch(){var q=document.getElementById('search-input').value.trim();if(!q){alert('Введите запрос');return}var btn=document.getElementById('search-btn');var c=document.getElementById('search-results-container');btn.disabled=true;btn.textContent='🔍 Поиск...';c.innerHTML='<div class="search-loader"><div class="loader-mini" style="margin:0 auto 1rem"><div class="ring ring-1"></div><div class="ring ring-2"></div><div class="core"></div></div><p>Ищем в DuckDuckGo...</p></div>';fetch('/search?q='+encodeURIComponent(q)).then(function(r){return r.json()}).then(function(data){btn.disabled=false;btn.textContent='🔍 Найти';if(!data.results||data.results.length===0){c.innerHTML='<div class="search-empty"><p style="font-size:3rem;margin-bottom:1rem">🔍</p><p>Ничего не найдено.</p><p style="margin-top:1rem"><a href="'+data.duckduckgo_url+'" target="_blank" style="color:#ffa500">Открыть в DuckDuckGo →</a></p></div>';return}var h='<div style="margin-bottom:1rem;color:#888">Найдено: '+data.results.length+' • <a href="'+data.duckduckgo_url+'" target="_blank" style="color:#ffa500">Открыть в DuckDuckGo →</a></div><div class="search-results">';data.results.forEach(function(r){h+='<div class="search-result-item"><div class="search-result-title"><a href="'+r.url+'" target="_blank">'+esc(r.title)+'</a></div><div class="search-result-text">'+esc(r.text)+'</div><a href="'+r.url+'" target="_blank" class="search-result-link">Перейти →</a></div>'});h+='</div>';c.innerHTML=h}).catch(function(e){btn.disabled=false;btn.textContent='🔍 Найти';c.innerHTML='<div class="search-empty"><p style="color:#ff6b6b">Ошибка: '+e.message+'</p></div>'})}
 
-    <section class="ai-section" id="ai-design">
-        <div class="ai-container">
-            <h2 class="section-title">AI Дизайн Интерьера</h2>
-            <p class="section-subtitle">
-                Опишите параметры комнаты — нейросеть сгенерирует дизайн и подберёт мебель с ссылками на магазины
-            </p>
+document.addEventListener('click',function(e){var b=e.target.closest?e.target.closest('.btn-search'):null;if(b&&b.dataset&&b.dataset.q){runSearch(decodeURIComponent(b.dataset.q));}});
 
-            <div class="ai-demo-wrapper">
-                <div class="ai-form">
-                    <div class="form-group">
-                        <label>Площадь комнаты (м²)</label>
-                        <input type="number" id="room-area" placeholder="20" min="5" max="500">
-                    </div>
-                    <div class="form-group">
-                        <label>Высота потолков (м)</label>
-                        <input type="number" id="room-height" placeholder="2.7" step="0.1" min="2" max="5">
-                    </div>
-                    <div class="form-group">
-                        <label>Стиль интерьера</label>
-                        <select id="room-style">
-                            <option value="scandi">Скандинавский</option>
-                            <option value="loft">Лофт</option>
-                            <option value="minimal">Минимализм</option>
-                            <option value="classic">Неоклассика</option>
-                            <option value="modern">Современный</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Пожелания</label>
-                        <textarea id="room-desc" rows="3" placeholder="Светлая гостиная, много дерева, большой диван..."></textarea>
-                    </div>
-                    <button class="btn-primary" id="generate-btn" style="width: 100%;" onclick="generateAI()">
-                        Сгенерировать дизайн
-                    </button>
-                </div>
+function normalizeDims(item){
+    var w=0.8,h=0.8,d=0.8;
+    var nums=(String(item.dimensions||'').match(/\d+(?:[.,]\d+)?/g)||[]).slice(0,3).map(function(n){return parseFloat(n.replace(',','.'))/100});
+    if(nums.length===3){w=Math.min(nums[0],2);h=Math.min(nums[1],2.5);d=Math.min(nums[2],2)}
+    else if(nums.length===2){w=Math.min(nums[0],2);d=Math.min(nums[1],2)}
+    var type=(item.type||'').toLowerCase(),name=(item.item||'').toLowerCase(),kind=kindOf(item);
+    var rot=0;
+    if(kind==='холодос'){h=Math.min(Math.max(Math.max.apply(null,nums.concat([1.85])),1.5),2.1);w=0.6;d=0.65}
+    else if(kind==='гарнитур'){w=Math.min(Math.max(Math.max.apply(null,nums.concat([1.8])),1.8),3.6);h=2.2;d=0.6}
+    else if(item.workplace){w=Math.min(Math.max(w,1.0),1.6);h=0.75;d=Math.min(Math.max(d,0.55),0.7)}
+    else if(type.indexOf('шкаф')!==-1||name.indexOf('шкаф')!==-1){h=Math.max(h,1.8);w=Math.max(w,1.0);d=Math.min(d,0.6);rot=Math.PI/2}
+    else if(type.indexOf('стеллаж')!==-1||name.indexOf('стеллаж')!==-1){h=Math.max(h,1.5);w=Math.max(w,0.8);d=Math.min(d,0.4);rot=Math.PI/2}
+    else if(type.indexOf('тумб')!==-1||name.indexOf('тумб')!==-1){h=Math.min(h,0.8);w=Math.min(w,0.6);d=Math.min(d,0.5)}
+    else if(type.indexOf('стол')!==-1||name.indexOf('стол')!==-1){
+        if(d>w){var sw=w;w=d;d=sw}
+        var coffee=/журнальн|кофейн/.test(name);
+        h=coffee?0.45:0.75;w=Math.max(w,coffee?0.8:1.0);d=Math.max(d,coffee?0.5:0.6);
+    }
+    else if(type.indexOf('кровать')!==-1||name.indexOf('кровать')!==-1){h=Math.min(h,0.5);w=Math.max(w,1.5);d=Math.max(d,2.0);rot=Math.PI}
+    else if(type.indexOf('диван')!==-1||name.indexOf('диван')!==-1){h=Math.max(h,0.8);w=Math.max(w,1.6);d=Math.max(d,0.9)}
+    else if(type.indexOf('телевизор')!==-1||type.indexOf('тв')!==-1){var big=Math.max(w,h);w=Math.min(Math.max(big,0.9),1.8);h=+(w*0.5625).toFixed(3);d=0.08;rot=Math.PI}
+    else if(kind==='ковёр'){h=0.012}
+    else if(kind==='ванна'){if(/душ/.test(name)){w=0.9;d=0.9;h=2.0}else{w=Math.min(Math.max(Math.max.apply(null,nums.concat([1.5])),1.5),1.8);d=0.75;h=0.6}}
+    else if(kind==='унитаз'){w=0.4;h=0.8;d=0.65}
+    else if(kind==='раковина'){w=Math.min(Math.max(w,0.5),0.8);h=0.85;d=0.45}
+    else if(kind==='стиралка'){w=0.6;h=0.85;d=0.6}
+    else if(type.indexOf('стул')!==-1||type.indexOf('кресл')!==-1){w=Math.min(w,0.5);d=Math.min(d,0.5)}
+    else if(type.indexOf('статуя')!==-1||name.indexOf('коня')!==-1){h=Math.max(h,1.0);rot=Math.PI}
+    return{w:w,h:h,d:d,rot:rot};
+}
 
-                <div class="ai-output" id="ai-output">
-                    <div class="ai-output-placeholder">
-                        <div class="icon">🌌</div>
-                        <p>Здесь появится результат генерации</p>
-                        <p style="font-size: 0.85rem; margin-top: 0.5rem; color: #444;">
-                            Заполните форму слева и нажмите кнопку
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <footer>
-        <p>&copy; 2026 Black Hole Studio. Все права защищены.</p>
-    </footer>
+function createFurnitureModel(item,dims,psycho){
+    dims=dims||normalizeDims(item);
+    var w=dims.w,h=dims.h,d=dims.d;
+    var group=new THREE.Group();
+    function box(gm,mt,px,py,pz){var m=new THREE.Mesh(gm,mt);m.position.set(px,py,pz);m.castShadow=true;group.add(m);return m}
+    var type=(item.type||'').toLowerCase(),name=(item.item||'').toLowerCase();
+    var woodMat=new THREE.MeshStandardMaterial({color:0x8B6F47,roughness:0.7});
+    var darkWoodMat=new THREE.MeshStandardMaterial({color:0x5C4033,roughness:0.7});
+    var fabricMat=new THREE.MeshStandardMaterial({color:0x6B7B8C,roughness:0.9});
+    var metalMat=new THREE.MeshStandardMaterial({color:0x888888,roughness:0.3,metalness:0.7});
+    var whiteMat=new THREE.MeshStandardMaterial({color:0xf5f5f5,roughness:0.5});
+    var cushionMat=new THREE.MeshStandardMaterial({color:0x7B68AE,roughness:0.8});
+    if(psycho){woodMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.85});darkWoodMat=new THREE.MeshStandardMaterial({color:0xf2f2f2,roughness:0.85});fabricMat=new THREE.MeshStandardMaterial({color:0xfbfbfb,roughness:0.95});metalMat=new THREE.MeshStandardMaterial({color:0xe8e8e8,roughness:0.4,metalness:0.2});whiteMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.7});cushionMat=new THREE.MeshStandardMaterial({color:0xf5f5f5,roughness:0.9});}
+    if(type.indexOf('кровать')!==-1||name.indexOf('кровать')!==-1){
+        var base=new THREE.Mesh(new THREE.BoxGeometry(w,0.3,d),darkWoodMat);base.position.y=0.15;base.castShadow=true;group.add(base);
+        var matt=new THREE.Mesh(new THREE.BoxGeometry(w-0.05,0.2,d-0.05),whiteMat);matt.position.y=0.4;matt.castShadow=true;group.add(matt);
+        var p1=new THREE.Mesh(new THREE.BoxGeometry(w*0.3,0.15,d*0.2),whiteMat);p1.position.set(-w*0.25,0.55,-d*0.3);p1.castShadow=true;group.add(p1);
+        var p2=p1.clone();p2.position.x=w*0.25;group.add(p2);
+    }else if(type.indexOf('диван')!==-1||name.indexOf('диван')!==-1){
+        var base=new THREE.Mesh(new THREE.BoxGeometry(w,0.4,d),fabricMat);base.position.y=0.2;base.castShadow=true;group.add(base);
+        var back=new THREE.Mesh(new THREE.BoxGeometry(w,0.5,0.15),fabricMat);back.position.set(0,0.65,-d/2+0.075);back.castShadow=true;group.add(back);
+        var aL=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.3,d),fabricMat);aL.position.set(-w/2+0.075,0.55,0);aL.castShadow=true;group.add(aL);
+        var aR=aL.clone();aR.position.x=w/2-0.075;group.add(aR);
+        for(var i=0;i<3;i++){var c=new THREE.Mesh(new THREE.BoxGeometry(w/3-0.05,0.15,d-0.1),cushionMat);c.position.set(-w/3+i*(w/3),0.48,0);c.castShadow=true;group.add(c);}
+    }else if(type.indexOf('стол')!==-1||name.indexOf('стол')!==-1){
+        var top=new THREE.Mesh(new THREE.BoxGeometry(w,0.05,d),woodMat);top.position.y=h;top.castShadow=true;group.add(top);
+        var legG=new THREE.CylinderGeometry(0.03,0.03,h,8);
+        [[-w/2+0.05,h/2,-d/2+0.05],[w/2-0.05,h/2,-d/2+0.05],[-w/2+0.05,h/2,d/2-0.05],[w/2-0.05,h/2,d/2-0.05]].forEach(function(p){var l=new THREE.Mesh(legG,metalMat);l.position.set(p[0],p[1],p[2]);l.castShadow=true;group.add(l);});
+    }else if(type.indexOf('стул')!==-1||type.indexOf('кресл')!==-1){
+        var seat=new THREE.Mesh(new THREE.BoxGeometry(w,0.1,d),fabricMat);seat.position.y=0.45;seat.castShadow=true;group.add(seat);
+        var back=new THREE.Mesh(new THREE.BoxGeometry(w,0.5,0.1),fabricMat);back.position.set(0,0.7,-d/2+0.05);back.castShadow=true;group.add(back);
+        var legG=new THREE.CylinderGeometry(0.02,0.02,0.45,8);
+        [[-w/2+0.05,0.225,-d/2+0.05],[w/2-0.05,0.225,-d/2+0.05],[-w/2+0.05,0.225,d/2-0.05],[w/2-0.05,0.225,d/2-0.05]].forEach(function(p){var l=new THREE.Mesh(legG,metalMat);l.position.set(p[0],p[1],p[2]);l.castShadow=true;group.add(l);});
+    }else if(type.indexOf('шкаф')!==-1||name.indexOf('шкаф')!==-1){
+        var body=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),darkWoodMat);body.position.y=h/2;body.castShadow=true;group.add(body);
+        var doorMat=new THREE.MeshStandardMaterial({color:0x6B4E3D,roughness:0.6});
+        var d1=new THREE.Mesh(new THREE.BoxGeometry(w/2-0.02,h-0.05,0.05),doorMat);d1.position.set(-w/4,h/2,d/2+0.025);group.add(d1);
+        var d2=d1.clone();d2.position.x=w/4;group.add(d2);
+        var hG=new THREE.CylinderGeometry(0.02,0.02,0.15,8);
+        var h1=new THREE.Mesh(hG,metalMat);h1.rotation.x=Math.PI/2;h1.position.set(-w/4+0.05,h/2,d/2+0.06);group.add(h1);
+        var h2=h1.clone();h2.position.x=w/4-0.05;group.add(h2);
+    }else if(type.indexOf('стеллаж')!==-1||name.indexOf('стеллаж')!==-1){
+        var poleG=new THREE.CylinderGeometry(0.03,0.03,h,8);
+        [[-w/2+0.05,h/2,-d/2+0.05],[w/2-0.05,h/2,-d/2+0.05],[-w/2+0.05,h/2,d/2-0.05],[w/2-0.05,h/2,d/2-0.05]].forEach(function(p){var pole=new THREE.Mesh(poleG,metalMat);pole.position.set(p[0],p[1],p[2]);pole.castShadow=true;group.add(pole);});
+        var sc=Math.max(1,Math.floor(h/0.3));
+        for(var s=0;s<=sc;s++){var shelf=new THREE.Mesh(new THREE.BoxGeometry(w-0.05,0.04,d-0.05),woodMat);shelf.position.y=s*(h/sc);shelf.castShadow=true;group.add(shelf);}
+    }else if(type.indexOf('телевизор')!==-1||type.indexOf('тв')!==-1){
+        var cabD=Math.max(d,0.42);
+        var cab=new THREE.Mesh(new THREE.BoxGeometry(w,0.45,cabD),darkWoodMat);cab.position.y=0.225;cab.castShadow=true;cab.receiveShadow=true;group.add(cab);
+        var cabF=new THREE.Mesh(new THREE.BoxGeometry(w-0.04,0.4,0.02),new THREE.MeshStandardMaterial({color:0x3a2a1a,roughness:0.5}));cabF.position.set(0,0.225,cabD/2+0.01);group.add(cabF);
+        var foot=new THREE.Mesh(new THREE.BoxGeometry(w*0.4,0.04,cabD*0.5),metalMat);foot.position.y=0.47;group.add(foot);
+        var scrY=0.45+h/2+0.06;
+        var glow=new THREE.Mesh(new THREE.BoxGeometry(w*0.95,h*1.08,0.02),new THREE.MeshStandardMaterial({color:0x000000,emissive:0x6a2be2,emissiveIntensity:0.7}));glow.position.set(0,scrY,-0.05);group.add(glow);
+        var screen=new THREE.Mesh(new THREE.BoxGeometry(w*0.92,h,0.05),new THREE.MeshStandardMaterial({color:0x0a0a0a,roughness:0.15}));screen.position.y=scrY;screen.castShadow=true;group.add(screen);
+        var disp=new THREE.Mesh(new THREE.PlaneGeometry(w*0.86,h-0.06),new THREE.MeshStandardMaterial({color:0x0a1830,emissive:0x1a4a8a,emissiveIntensity:0.85}));disp.position.set(0,scrY,0.03);group.add(disp);
+    }else if(type.indexOf('тумб')!==-1||name.indexOf('тумб')!==-1){
+        var body=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),woodMat);body.position.y=h/2;body.castShadow=true;group.add(body);
+        var drMat=new THREE.MeshStandardMaterial({color:0x6B4E3D,roughness:0.6});
+        for(var i=0;i<3;i++){var dr=new THREE.Mesh(new THREE.BoxGeometry(w-0.05,h/3-0.05,0.05),drMat);dr.position.set(0,h/6+i*(h/3),d/2+0.025);group.add(dr);var hn=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.02,0.02),metalMat);hn.position.set(0,h/6+i*(h/3),d/2+0.06);group.add(hn);}
+    }else if(type.indexOf('лампа')!==-1||type.indexOf('торшер')!==-1||name.indexOf('лампа')!==-1||name.indexOf('торшер')!==-1){
+        var pole=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,h,8),metalMat);pole.position.y=h/2;pole.castShadow=true;group.add(pole);
+        var shade=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.2,0.3,16),new THREE.MeshStandardMaterial({color:0xffffcc,emissive:0xffffcc,emissiveIntensity:0.5}));shade.position.y=h-0.15;group.add(shade);
+        var base=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.05,16),metalMat);base.position.y=0.025;group.add(base);
+    }else if(type.indexOf('холодильник')!==-1||name.indexOf('холодильник')!==-1||name.indexOf('холодос')!==-1){
+        var cb=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color:0xdadde0,roughness:0.35,metalness:0.25}));cb.position.y=h/2;cb.castShadow=true;group.add(cb);
+        var cl=new THREE.Mesh(new THREE.BoxGeometry(w+0.01,0.02,d+0.01),new THREE.MeshStandardMaterial({color:0x999999}));cl.position.y=h*0.62;group.add(cl);
+        var cg=new THREE.BoxGeometry(0.03,0.18,0.03);
+        [-1,1].forEach(function(s){var a=new THREE.Mesh(cg,metalMat);a.position.set(s*w*0.3,h*0.8,d/2+0.02);group.add(a);var b=new THREE.Mesh(cg,metalMat);b.position.set(s*w*0.3,h*0.4,d/2+0.02);group.add(b);});
+    }else if(type.indexOf('гарнитур')!==-1||name.indexOf('гарнитур')!==-1||name.indexOf('кухон')!==-1){
+        var gb=new THREE.Mesh(new THREE.BoxGeometry(w,h*0.42,d),darkWoodMat);gb.position.y=h*0.21;gb.castShadow=true;group.add(gb);
+        var cn=Math.max(2,Math.round(w/0.6));
+        for(var gi=0;gi<cn;gi++){var df=new THREE.Mesh(new THREE.BoxGeometry(w/cn-0.03,h*0.4,0.03),new THREE.MeshStandardMaterial({color:0x6B4E3D,roughness:0.6}));df.position.set(-w/2+w/cn*(gi+0.5),h*0.21,d/2+0.02);group.add(df);}
+    }else if(type.indexOf('столешниц')!==-1||name.indexOf('столешниц')!==-1){
+        var tp=new THREE.Mesh(new THREE.BoxGeometry(w,0.04,d),woodMat);tp.position.y=0.9;tp.castShadow=true;group.add(tp);
+    }else if(kindOf(item)==='ванна'&&h>1.5){
+        box(new THREE.BoxGeometry(w,0.12,d),whiteMat,0,0.06,0);
+        var glassMat=new THREE.MeshStandardMaterial({color:0xcfe8f5,transparent:true,opacity:0.35,roughness:0.1});
+        box(new THREE.BoxGeometry(w,h-0.12,0.02),glassMat,0,h/2+0.06,d/2);box(new THREE.BoxGeometry(0.02,h-0.12,d),glassMat,w/2,h/2+0.06,0);
+    }else if(kindOf(item)==='ванна'){
+        box(new THREE.BoxGeometry(w,h,d),whiteMat,0,h/2,0);
+        box(new THREE.BoxGeometry(w-0.14,0.04,d-0.14),new THREE.MeshStandardMaterial({color:0xbfd8e6,roughness:0.3}),0,h-0.03,0);
+    }else if(kindOf(item)==='унитаз'){
+        box(new THREE.BoxGeometry(w*0.8,0.4,d*0.75),whiteMat,0,0.2,0.05);
+        box(new THREE.BoxGeometry(w,0.06,d*0.8),whiteMat,0,0.43,0.05);
+        box(new THREE.BoxGeometry(w,0.45,0.16),whiteMat,0,0.6,-d/2+0.08);
+    }else if(kindOf(item)==='раковина'){
+        box(new THREE.BoxGeometry(w,0.5,d),woodMat,0,0.5,0);
+        box(new THREE.BoxGeometry(w,0.1,d),whiteMat,0,0.8,0);
+        box(new THREE.BoxGeometry(w*0.6,0.03,d*0.6),new THREE.MeshStandardMaterial({color:0xbfd8e6,roughness:0.3}),0,0.86,0);
+        box(new THREE.CylinderGeometry(0.015,0.015,0.2,8),metalMat,0,0.95,-d/2+0.06);
+    }else if(kindOf(item)==='стиралка'){
+        box(new THREE.BoxGeometry(w,h,d),whiteMat,0,h/2,0);
+        var door=box(new THREE.CylinderGeometry(0.19,0.19,0.03,24),new THREE.MeshStandardMaterial({color:0x2b2f36,roughness:0.2}),0,h*0.5,d/2+0.01);door.rotation.x=Math.PI/2;
+    }else if(kindOf(item)==='ковёр'){
+        var rugM=new THREE.Mesh(new THREE.BoxGeometry(w,0.012,d),new THREE.MeshStandardMaterial({color:0x8b6b61,roughness:1}));rugM.position.y=0.006;rugM.receiveShadow=true;group.add(rugM);
+    }else if(type.indexOf('статуя')!==-1||name.indexOf('коня')!==-1){
+        var pl=new THREE.MeshStandardMaterial({color:0xfafafa,roughness:0.95,metalness:0.0});
+        var dk=new THREE.MeshStandardMaterial({color:0x1a1a1a,roughness:0.6});
+        var bL=Math.max(d*1.7,0.75);
+        var bd=new THREE.Mesh(new THREE.BoxGeometry(w,h*0.4,bL),pl);bd.position.y=h*0.55;bd.castShadow=true;group.add(bd);
+        var lH=h*0.55,lG=new THREE.CylinderGeometry(0.04,0.03,lH,8);
+        [[-w*0.34,lH/2,-bL*0.34],[w*0.34,lH/2,-bL*0.34],[-w*0.34,lH/2,bL*0.34],[w*0.34,lH/2,bL*0.34]].forEach(function(p){var lg=new THREE.Mesh(lG,pl);lg.position.set(p[0],p[1],p[2]);lg.castShadow=true;group.add(lg);});
+        var nk=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.12,h*0.5,10),pl);nk.position.set(0,h*0.88,bL*0.42);nk.rotation.x=-0.6;nk.castShadow=true;group.add(nk);
+        var sk=new THREE.Mesh(new THREE.SphereGeometry(w*0.42,14,12),pl);sk.scale.set(1,0.9,1.1);sk.position.set(0,h*1.12,bL*0.62);sk.rotation.z=0.12;sk.castShadow=true;group.add(sk);
+        var sn=new THREE.Mesh(new THREE.BoxGeometry(w*0.42,h*0.26,bL*0.5),pl);sn.position.set(0,h*1.0,bL*0.92);sn.rotation.x=0.5;sn.rotation.z=-0.1;sn.castShadow=true;group.add(sn);
+        var nt=new THREE.Mesh(new THREE.SphereGeometry(w*0.2,10,8),pl);nt.scale.set(1,0.8,0.9);nt.position.set(0,h*0.92,bL*1.12);nt.castShadow=true;group.add(nt);
+        var nrG=new THREE.SphereGeometry(0.03,8,8);
+        [[-w*0.12,h*0.93,bL*1.2],[w*0.12,h*0.93,bL*1.2]].forEach(function(p){var nr=new THREE.Mesh(nrG,dk);nr.position.set(p[0],p[1],p[2]);group.add(nr);});
+        var mo=new THREE.Mesh(new THREE.BoxGeometry(w*0.3,h*0.12,bL*0.3),dk);mo.position.set(0,h*0.86,bL*1.0);mo.rotation.x=0.5;group.add(mo);
+        var jw=new THREE.Mesh(new THREE.BoxGeometry(w*0.34,h*0.1,bL*0.34),pl);jw.position.set(0,h*0.8,bL*1.02);jw.rotation.x=0.5;jw.castShadow=true;group.add(jw);
+        var eyeG=new THREE.SphereGeometry(w*0.16,12,12);
+        var eL=new THREE.Mesh(eyeG,pl);eL.position.set(-w*0.3,h*1.16,bL*0.78);eL.castShadow=true;group.add(eL);
+        var eR=new THREE.Mesh(eyeG,pl);eR.scale.set(0.8,1.1,0.8);eR.position.set(w*0.32,h*1.2,bL*0.74);eR.castShadow=true;group.add(eR);
+        var puG=new THREE.SphereGeometry(w*0.09,10,10);
+        var pL=new THREE.Mesh(puG,dk);pL.position.set(-w*0.36,h*1.16,bL*0.9);group.add(pL);
+        var pR=new THREE.Mesh(puG,dk);pR.scale.set(1.2,0.7,1);pR.position.set(w*0.38,h*1.21,bL*0.86);group.add(pR);
+        var earG=new THREE.ConeGeometry(0.06,0.22,8);
+        var er1=new THREE.Mesh(earG,pl);er1.position.set(-w*0.2,h*1.34,bL*0.55);er1.rotation.z=0.4;er1.castShadow=true;group.add(er1);
+        var er2=new THREE.Mesh(earG,pl);er2.position.set(w*0.22,h*1.38,bL*0.5);er2.rotation.z=-0.6;er2.castShadow=true;group.add(er2);
+        var manG=new THREE.BoxGeometry(0.05,h*0.18,bL*0.12);
+        for(var mi=0;mi<5;mi++){var mg=new THREE.Mesh(manG,pl);mg.position.set((mi%2?0.04:-0.04),h*(1.0+mi*0.04),bL*(0.42+mi*0.05));mg.rotation.x=-0.6+(mi*0.12);mg.rotation.z=(mi%2?0.3:-0.3);mg.castShadow=true;group.add(mg);}
+        var tl=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.07,h*0.45,8),pl);tl.position.set(0,h*0.62,-bL*0.5);tl.rotation.x=0.9;tl.castShadow=true;group.add(tl);
+    }else{
+        var box=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color:0x8a2be2,roughness:0.4,metalness:0.3}));box.position.y=h/2;box.castShadow=true;group.add(box);
+    }
+    return group;
+}
+function psychoPlace(item,roomDims){
+    var dims=normalizeDims(item);
+    var t=(item.type||'').toLowerCase(),n=(item.item||'').toLowerCase();
+    var wall=0.4;
+    if(t.indexOf('диван')!==-1||n.indexOf('диван')!==-1)
+        return{x:roomDims.width/2,z:dims.d/2+wall,w:dims.w,h:dims.h,d:dims.d,rot:0};
+    if(t.indexOf('статуя')!==-1||n.indexOf('коня')!==-1)
+        return{x:roomDims.width/2,z:roomDims.depth-dims.d/2-wall,w:dims.w,h:dims.h,d:dims.d,rot:Math.PI};
+    return{x:roomDims.width/2,z:roomDims.depth/2,w:dims.w,h:dims.h,d:dims.d,rot:0};
+}
 
-    <script>
-        // Плавный скролл
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) target.scrollIntoView({ behavior: 'smooth' });
-            });
+var PERM={living:['диван','шкаф','тв'],bedroom:['кровать','шкаф'],kitchen:['гарнитур','холодос','стол'],office:['шкаф','стол','стул'],bathroom:['ванна','унитаз','раковина']};
+var DEF={
+ ванна:{item:'Ванна акриловая',type:'ванна',description:'Акриловая ванна',materials:'акрил',dimensions:'170x60x75',price:25000},
+ унитаз:{item:'Унитаз подвесной',type:'унитаз',description:'Подвесной унитаз',materials:'фарфор',dimensions:'40x80x55',price:22000},
+ раковина:{item:'Раковина с тумбой',type:'раковина',description:'Тумба с раковиной',materials:'керамика, МДФ',dimensions:'60x85x45',price:15000},
+ диван:{item:'Диван',type:'диван',description:'Мягкий диван для гостиной',materials:'ткань, дерево',dimensions:'220x85x95',price:35000},
+ шкаф:{item:'Шкаф',type:'шкаф',description:'Вместительный шкаф для вещей',materials:'МДФ, шпон',dimensions:'100x200x60',price:28000},
+ тв:{item:'Телевизор',type:'телевизор',description:'ТВ для просмотра фильмов',materials:'панель, металл',dimensions:'125x75x8',price:45000},
+ кровать:{item:'Кровать',type:'кровать',description:'Двуспальная кровать',materials:'дерево, текстиль',dimensions:'160x50x200',price:40000},
+ тумба:{item:'Тумба',type:'тумба',description:'Прикроватная тумба',materials:'МДФ',dimensions:'50x50x40',price:8000},
+ ночник:{item:'Ночник',type:'лампа',description:'Прикроватный ночник',materials:'металл, стекло',dimensions:'20x30x20',price:2500},
+ гарнитур:{item:'Кухонный гарнитур',type:'гарнитур',description:'Линейный гарнитур с столешницей',materials:'МДФ, пластик',dimensions:'240x220x60',price:65000},
+ холодос:{item:'Холодильник',type:'холодильник',description:'Двухкамерный холодильник',materials:'металл, пластик',dimensions:'60x180x65',price:42000},
+ стол:{item:'Обеденный стол',type:'стол',description:'Стол для приёмов пищи',materials:'дерево, металл',dimensions:'140x75x80',price:19000},
+ стул:{item:'Стул',type:'стул',description:'Обеденный стул',materials:'дерево, ткань',dimensions:'45x90x45',price:6000},
+ кресло:{item:'Кресло',type:'кресло',description:'Мягкое кресло',materials:'ткань, металл',dimensions:'70x90x75',price:15000},
+ монитор:{item:'Монитор',type:'монитор',description:'Дисплей для работы',materials:'панель, металл',dimensions:'60x40x5',price:18000}
+};
+function kindOf(it){var t=((it.type||'')+'').toLowerCase(),n=((it.item||'')+'').toLowerCase();
+ if(n.indexOf('столешниц')!==-1)return'столешница';
+ var tn=t+' '+n;
+ if(/ков[её]р|коврик/.test(tn))return'ковёр';
+ if(/стиральн/.test(tn))return'стиралка';
+ if(/мультиварк|микроволн|чайник|посудомо|духов|варочн|кофевар|кофемаш|тостер|блендер|техник/.test(tn))return'техника';
+ if(/ламп|торшер|светильник|люстр|ночник/.test(tn))return'лампа';
+ if(t.indexOf('диван')!==-1||n.indexOf('диван')!==-1)return'диван';
+ if(t.indexOf('кровать')!==-1||n.indexOf('кровать')!==-1)return'кровать';
+ if(/унитаз|инсталляц/.test(tn))return'унитаз';
+ if(/раковин|умывальник/.test(tn))return'раковина';
+ if(/ванн|душ/.test(tn))return'ванна';
+ if(t.indexOf('холодильник')!==-1||n.indexOf('холодильник')!==-1||n.indexOf('холодос')!==-1)return'холодос';
+ if(t.indexOf('гарнитур')!==-1||n.indexOf('гарнитур')!==-1)return'гарнитур';
+ if((t.indexOf('монитор')!==-1||n.indexOf('монитор')!==-1||n.indexOf('компьютер')!==-1||n.indexOf(' пк')!==-1||n==='пк')&&n.indexOf('стол')===-1&&t.indexOf('стол')===-1)return'монитор';
+ if(t.indexOf('шкаф')!==-1||n.indexOf('шкаф')!==-1)return'шкаф';
+ if(t.indexOf('стеллаж')!==-1||n.indexOf('стеллаж')!==-1||n.indexOf('полк')!==-1)return'стеллаж';
+ if(t.indexOf('телевизор')!==-1||t.indexOf('тв')!==-1||n.indexOf('телевиз')!==-1)return'тв';
+ if(t.indexOf('стол')!==-1||n.indexOf('стол')!==-1||n.indexOf('обеден')!==-1||n.indexOf('рабоч')!==-1)return'стол';
+ if(t.indexOf('стул')!==-1||n.indexOf('стул')!==-1)return'стул';
+ if(t.indexOf('кресл')!==-1||n.indexOf('кресл')!==-1)return'кресло';
+ if(t.indexOf('тумб')!==-1||n.indexOf('тумб')!==-1)return'тумба';
+ if(t.indexOf('лампа')!==-1||t.indexOf('торшер')!==-1||n.indexOf('торшер')!==-1||n.indexOf('ночник')!==-1)return'лампа';
+ if(t.indexOf('растен')!==-1||n.indexOf('растен')!==-1||n.indexOf('цвет')!==-1)return'растен';
+ return'другое';}
+function mergeDef(d,def){var o={};for(var x in def)o[x]=def[x];for(var y in d)if(d[y]!==undefined&&d[y]!==null&&d[y]!=='')o[y]=d[y];return o;}
+function effDims(item,dims,roomType){
+    var k=kindOf(item),w=dims.w,d=dims.d;
+    if(k==='тв')d=Math.max(d,0.42);
+    if(k==='стол'&&item._chairs){if(item.workplace)d+=0.55;else{d+=1.0;if(item._chairs>4)w+=1.0}}
+    var rot=dims.rot||0;
+    var aw=(Math.abs(rot-Math.PI/2)<0.01)?d:w;
+    var ad=(Math.abs(rot-Math.PI/2)<0.01)?w:d;
+    return{w:aw,d:ad,h:dims.h,rot:rot};
+}
+function attachCompanions(group,item,dims,psycho,roomType){
+    if(psycho)return;var k=kindOf(item),w=dims.w,h=dims.h,d=dims.d;
+    var dark=new THREE.MeshStandardMaterial({color:0x5C4033,roughness:0.7});
+    var met=new THREE.MeshStandardMaterial({color:0x888888,roughness:0.3,metalness:0.7});
+    var wht=new THREE.MeshStandardMaterial({color:0xf5f5f5,roughness:0.5});
+    function box(gm,mt,px,py,pz){var m=new THREE.Mesh(gm,mt);m.position.set(px,py,pz);m.castShadow=true;group.add(m);return m;}
+    if(k==='стол'&&(roomType==='office'||item.workplace)){
+        box(new THREE.BoxGeometry(0.6,0.36,0.04),new THREE.MeshStandardMaterial({color:0x111111,roughness:0.2}),0,h+0.2,-d/2+0.1);
+        box(new THREE.PlaneGeometry(0.55,0.31),new THREE.MeshStandardMaterial({color:0x0a1830,emissive:0x1a4a8a,emissiveIntensity:0.8}),0,h+0.2,-d/2+0.08);
+        box(new THREE.BoxGeometry(0.18,0.36,0.4),met,-w/2+0.15,h+0.18,d/2-0.25);
+    }else if(k==='гарнитур'){
+        box(new THREE.BoxGeometry(w+0.1,0.04,d+0.05),wht,0,0.9,0);
+    }
+    chairSpots(item,dims,roomType).forEach(function(sp){
+        var c=createFurnitureModel({type:'стул',item:'Стул'},{w:0.45,h:0.9,d:0.45,rot:0});
+        c.position.set(sp.x,0,sp.z);c.rotation.y=sp.ry;c.userData={furniture:item._chairItem||{item:'Стул',type:'стул'}};group.add(c);
+    });
+}
+function chairSpots(item,dims,roomType){
+    if(kindOf(item)!=='стол'||!item._chairs||roomType==='office')return[];
+    var w=dims.w,d=dims.d,n=Math.min(item._chairs,8),ends=n>4?Math.min(n-4,2):0,front=Math.ceil((n-ends)/2),back=n-ends-front,out=[];
+    for(var i=0;i<front;i++)out.push({x:-w/2+w*(i+0.5)/front,z:d/2+0.32,ry:Math.PI});
+    for(var j=0;j<back;j++)out.push({x:-w/2+w*(j+0.5)/back,z:-d/2-0.32,ry:0});
+    if(ends>0)out.push({x:-w/2-0.32,z:0,ry:Math.PI/2});
+    if(ends>1)out.push({x:w/2+0.32,z:0,ry:-Math.PI/2});
+    return out;
+}
+function runSearch(q){var si=document.getElementById('search-input');if(si)si.value=q;var sec=document.getElementById('search');if(sec)sec.scrollIntoView({behavior:'smooth'});setTimeout(doSearch,500);}
+var NO_3D={'техника':1,'монитор':1,'другое':1,'растен':1,'столешница':1};
+function composeFurniture(raw,roomType,noDefaults){
+    raw=(raw||[]).filter(function(it){return!NO_3D[kindOf(it)]||PERM[roomType]&&PERM[roomType].indexOf(kindOf(it))!==-1});
+    var perm=PERM[roomType]||PERM.living,used={},out=[];
+    perm.forEach(function(k){
+        var found=null;
+        for(var i=0;i<raw.length;i++){if(!used[i]&&kindOf(raw[i])===k){found=raw[i];used[i]=1;break}}
+        if(found)out.push(mergeDef(found,DEF[k]||{}));
+        else if(!noDefaults)out.push(DEF[k]?Object.assign({},DEF[k]):{item:k,type:k,description:'',dimensions:'',price:0});
+    });
+    var extras=raw.filter(function(it,i){return!used[i]&&kindOf(it)!=='стул'});
+    extras.sort(function(a,b){return(b.workplace?1:0)-(a.workplace?1:0)});
+    extras.forEach(function(it){out.push(Object.assign({},it))});
+    if(roomType==='office')return out;
+    var chairs=raw.filter(function(it){return kindOf(it)==='стул'}),count=chairs.reduce(function(s,it){return s+(+it.qty||1)},0),chairItem=chairs[0];
+    var table=out.filter(function(it){return kindOf(it)==='стол'})[0];
+    out.forEach(function(it,t){if(it.workplace&&kindOf(it)==='стол')out[t]=Object.assign({},it,{_chairs:1,_chairItem:chairItem})});
+    if(table&&count){
+        var ti=out.indexOf(out.filter(function(it){return kindOf(it)==='стол'})[0]);
+        out[ti]=Object.assign({},out[ti],{_chairs:out[ti].workplace?1:count,_chairItem:chairItem});
+    }else if(count){
+        for(var c=0;c<Math.min(count,4);c++)out.push(Object.assign({},chairItem));
+    }
+    return out;
+}
+
+var SLOT_ROT={
+    bedroom:{'шкаф':Math.PI/2,'кровать':Math.PI},
+    kitchen:{'гарнитур':Math.PI/2,'холодос':-Math.PI/2,'стол':0},
+    office:{'шкаф':Math.PI/2,'стол':0,'стул':Math.PI},
+    bathroom:{'ванна':0,'унитаз':-Math.PI/2,'раковина':Math.PI/2},
+    living:{'диван':0,'шкаф':Math.PI/2,'стеллаж':Math.PI/2,'тв':Math.PI}
+};
+function quarter(r){return Math.abs(Math.abs(r||0)-Math.PI/2)<0.01}
+var ZONE_OF={'кровать':'bedroom','тумба':'bedroom','диван':'living','тв':'living','кресло':'living','ковёр':'living','стол':'office','стул':'office'};
+function computeZonedLayout(furniture,roomDims,roomType){
+    var zones=roomType.split('+'),W=roomDims.width,D=roomDims.depth,alongX=W>=D,divT=0.45,passage=1.0;
+    var divider=furniture.filter(function(f){return f.divider})[0],groups=[[],[]];
+    furniture.forEach(function(it){
+        if(it.divider)return;
+        var k=kindOf(it),z=ZONE_OF[k];
+        if(k==='стол'&&zones.indexOf('office')<0)z='living';
+        if(k==='шкаф')z=zones.indexOf('bedroom')>=0?'bedroom':zones[0];
+        var idx=zones.indexOf(z);
+        groups[idx<0?0:idx].push(it);
+    });
+    var half=(alongX?W:D)/2,items=[];
+    [0,1].forEach(function(i){
+        var len=half-divT/2,dims=alongX?{width:len,depth:D,height:roomDims.height}:{width:W,depth:len,height:roomDims.height};
+        var off=i===0?0:half+divT/2;
+        computeLayout(groups[i],dims,zones[i],{noDecor:true,noDefaults:true}).items.forEach(function(li){
+            if(alongX)li.pos.x+=off;else li.pos.z+=off;
+            items.push(li);
         });
+    });
+    if(divider){
+        var len=(alongX?D:W)-passage,isShelf=kindOf(divider)==='стеллаж';
+        var dims={w:len,h:kindOf(divider)==='шкаф'?2.2:(/полк/.test(String(divider.item).toLowerCase())?1.5:1.8),d:isShelf?0.4:0.6,rot:0};
+        var pos=alongX?{x:half,z:len/2,w:dims.d,d:len,rot:Math.PI/2}:{x:len/2,z:half,w:len,d:dims.d,rot:0};
+        items.push({item:divider,dims:dims,pos:pos,shift:0});
+    }
+    return{psycho:false,decor:{winX:Math.min(W*0.7,W-1.0),picZ:D*0.3,picture:false},items:items,roomType:roomType};
+}
 
-        // Адрес бэкенда
-        const API_URL = '';
-
-        async function generateAI() {
-            const output = document.getElementById('ai-output');
-            const btn = document.getElementById('generate-btn');
-            const area = document.getElementById('room-area').value || '20';
-            const height = document.getElementById('room-height').value || '2.7';
-            const styleSelect = document.getElementById('room-style');
-            const style = styleSelect.options[styleSelect.selectedIndex].text;
-            const desc = document.getElementById('room-desc').value || 'Уютное пространство';
-
-            // Блокируем кнопку на время генерации
-            btn.disabled = true;
-            btn.textContent = 'Генерация...';
-
-            // Этап 1: Погружение в нейросеть
-            output.innerHTML = `
-                <div class="loader-mini">
-                    <div class="ring ring-1"></div>
-                    <div class="ring ring-2"></div>
-                    <div class="ring ring-3"></div>
-                    <div class="core"></div>
-                </div>
-                <p class="loader-text">Погружение в нейросеть...</p>
-                <p class="loader-subtext">Phi-3.5 анализирует метрики комнаты</p>
-            `;
-
-            try {
-                const response = await fetch(`${API_URL}/generate-design`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        area: parseFloat(area),
-                        height: parseFloat(height),
-                        style: style,
-                        description: desc
-                    })
-                });
-
-                if (!response.ok) {
-                    const err = await response.json().catch(() => ({ detail: 'Неизвестная ошибка' }));
-                    throw new Error(err.detail || 'Ошибка генерации');
+function computeLayout(furniture,roomDims,roomType,opts){
+    if(roomType&&roomType.indexOf('+')>0)return computeZonedLayout(furniture,roomDims,roomType);
+    opts=opts||{};
+    var psycho=isPsycho(furniture,roomType),W=roomDims.width,D=roomDims.depth;
+    var wall=0.35,gap=0.45,hug=0.05,placed=[],items=[],furniturePlaced=[];
+    var decor=psycho||roomType==='bathroom'||opts.noDecor?null:{winX:Math.min(W*0.7,W-1.0),picZ:D*0.3,picture:roomType!=='kitchen'};
+    if(decor)placed.push({x:0.06,z:decor.picZ,w:0.12,d:0.8},{x:decor.winX,z:0.3,w:1.5,d:0.6});
+    function clash(x,z,w,d,g){
+        for(var i=0;i<placed.length;i++){var p=placed[i];
+            if(Math.abs(x-p.x)<(w+p.w)/2+g&&Math.abs(z-p.z)<(d+p.d)/2+g)return true;}
+        return false;
+    }
+    function freeSlot(ed){
+        var tries=[[gap,wall],[0.2,0.1],[0.05,0.05]];
+        for(var t=0;t<tries.length;t++){var g=tries[t][0],wl=tries[t][1];
+            for(var z=ed.d/2+wl;z<=D-ed.d/2-wl+0.001;z+=0.1){
+                for(var x=ed.w/2+wl;x<=W-ed.w/2-wl+0.001;x+=0.1){
+                    if(!clash(x,z,ed.w,ed.d,g))return{x:x,z:z,w:ed.w,d:ed.d,rot:ed.rot};
                 }
-
-                const data = await response.json();
-
-                // Этап 2: Парсинг JSON из ответа модели
-                let furniture = [];
-                let rawText = data.response || '';
-
-                try {
-                    // Ищем JSON-объект в тексте ответа
-                    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-                    if (jsonMatch) {
-                        const parsed = JSON.parse(jsonMatch[0]);
-                        furniture = Array.isArray(parsed.furniture) ? parsed.furniture : [];
-                    }
-                } catch (e) {
-                    console.warn('Не удалось распарсить JSON:', e);
-                }
-
-                // Этап 3: Формируем список товаров
-                let productsHTML = '';
-                if (furniture.length > 0) {
-                    productsHTML = furniture.map(item => `
-                        <div class="product-item">
-                            <span class="product-name">${escapeHtml(item.item || 'Предмет')}</span>
-                            <span class="product-type">${escapeHtml(item.type || '')}</span>
-                        </div>
-                    `).join('');
-                } else {
-                    productsHTML = '<p style="color: #888; font-size: 0.9rem;">Не удалось распознать мебель. Попробуйте ещё раз.</p>';
-                }
-
-		const timeSec = typeof data.time === 'number' && data.time > 0 ? (data.time / 1e9).toFixed(1) : '—';
-                
-		output.innerHTML = `
-                    <div class="result-card">
-                        <div class="result-image-placeholder"></div>
-                        <h3 style="color: #fff; margin-bottom: 1rem; font-size: 1.3rem;">
-                            Дизайн сгенерирован!
-                        </h3>
-                        <div class="result-info">
-                            <p>
-                                Стиль: <span class="highlight">${escapeHtml(style)}</span><br>
-                                Площадь: <span class="highlight">${escapeHtml(area)} м²</span> •
-                                Потолки: <span class="highlight">${escapeHtml(height)} м</span><br>
-                                <span style="color: #888; font-size: 0.85rem;">${escapeHtml(desc)}</span>
-                            </p>
-                        </div>
-                        <div class="result-products">
-                            <h4>🛒 Подборка мебели от AI</h4>
-                            ${productsHTML}
-                        </div>
-                        <p style="color: #666; font-size: 0.8rem; margin-top: 1rem;">
-                            Модель: ${data.model || 'phi3.5'} • Время: ${timeSec} сек
-                        </p>
-                    </div>
-                `;
-
-            } catch (error) {
-                output.innerHTML = `
-                    <div class="error-box">
-                        <div class="icon">⚠️</div>
-                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">${escapeHtml(error.message)}</p>
-                        <p style="font-size: 0.9rem; color: #888;">
-                            Убедитесь, что бэкенд запущен:<br>
-                            <code style="color: #00ffff;">cd ~/black-hole-ai/backend && source venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port 8000</code>
-                        </p>
-                    </div>
-                `;
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Сгенерировать дизайн';
             }
         }
-
-        // Экранирование HTML для безопасности
-        function escapeHtml(text) {
-            if (!text) return '';
-            return String(text)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
+        return null;
+    }
+    function permSlot(kind,ed){
+        var map=SLOT_ROT[roomType]||SLOT_ROT.living;
+        if(!(kind in map))return{x:W/2,z:D/2,w:ed.w,d:ed.d,rot:ed.rot};
+        var rot=map[kind],w=ed.w,d=ed.d,x,z;
+        if(quarter(rot)!==quarter(ed.rot)){w=ed.d;d=ed.w}
+        if(roomType==='bedroom'){
+            if(kind==='шкаф'){x=w/2+wall;z=D-d/2-wall;}
+            else{x=W/2+0.45;z=D-d/2-wall;}
+        }else if(roomType==='kitchen'){
+            if(kind==='гарнитур'){x=w/2+hug;z=D/2;}
+            else if(kind==='холодос'){x=W-w/2-hug;z=D-d/2-hug;}
+            else{x=W/2+0.3;z=D/2;}
+        }else if(roomType==='bathroom'){
+            if(kind==='ванна'){x=w/2+hug;z=d/2+hug;}
+            else if(kind==='унитаз'){x=W-w/2-hug;z=D-d/2-0.35;}
+            else{x=w/2+hug;z=D-d/2-0.3;}
+        }else if(roomType==='office'){
+            if(kind==='шкаф'){x=w/2+wall;z=D/2;}
+            else if(kind==='стол'){x=W/2+0.5;z=D/2;}
+            else{x=W/2+0.5;z=D/2+0.7;}
+        }else{
+            if(kind==='диван'){x=W/2;z=d/2+wall;}
+            else if(kind==='шкаф'||kind==='стеллаж'){x=w/2+wall;z=D/2;}
+            else{x=W/2;z=D-d/2-wall;}
         }
-    </script>
+        x=Math.min(Math.max(x,w/2+hug),W-w/2-hug);
+        z=Math.min(Math.max(z,d/2+hug),D-d/2-hug);
+        return{x:x,z:z,w:w,d:d,rot:rot};
+    }
+    var list=psycho?furniture:composeFurniture(furniture,roomType||'living',opts.noDefaults);
+    var permKinds=psycho?[]:(PERM[roomType]||PERM.living);
+    function besideBed(ed){
+        var bed=items.filter(function(li){return kindOf(li.item)==='кровать'})[0];
+        if(!bed)return null;
+        var spotsB=[[bed.dims.w/2+ed.w/2+0.08,-bed.dims.d/2+ed.d/2+0.05],[-bed.dims.w/2-ed.w/2-0.08,-bed.dims.d/2+ed.d/2+0.05]];
+        for(var k=0;k<spotsB.length;k++){
+            var wp=planToWorld(bed,spotsB[k][0],spotsB[k][1]);
+            if(wp.x>ed.w/2&&wp.x<W-ed.w/2&&wp.z>ed.d/2&&wp.z<D-ed.d/2&&!clash(wp.x,wp.z,ed.w,ed.d,0.02))return{x:wp.x,z:wp.z,w:ed.w,d:ed.d,rot:bed.pos.rot};
+        }
+        return null;
+    }
+    var rugs=list.filter(function(it){return kindOf(it)==='ковёр'});
+    list=list.filter(function(it){return kindOf(it)!=='ковёр'}).concat(rugs);
+    list.forEach(function(item){
+        var dims=normalizeDims(item),kind=kindOf(item);
+        if(kind==='гарнитур')dims.w=Math.min(dims.w,D-0.3);
+        if(kind==='ванна')dims.w=Math.min(dims.w,W-0.1);
+        if(kind==='ковёр'){
+            dims.w=Math.min(Math.max(dims.w,1.2),W*0.7);dims.d=Math.min(Math.max(dims.d,0.8),D*0.7);dims.rot=0;
+            items.push({item:item,dims:dims,pos:{x:W/2,z:D/2,w:dims.w,d:dims.d,rot:0},shift:0});
+            return;
+        }
+        function hits(pos){return furniturePlaced.some(function(p){return Math.abs(pos.x-p.x)<(pos.w+p.w)/2+0.02&&Math.abs(pos.z-p.z)<(pos.d+p.d)/2+0.02})}
+        function place(){
+            var ed=effDims(item,dims,roomType);
+            var pos=psycho?psychoPlace(item,roomDims):(permKinds.indexOf(kind)!==-1?permSlot(kind,ed):(kind==='тумба'&&besideBed(ed))||freeSlot(ed));
+            if(pos&&!psycho&&permKinds.indexOf(kind)!==-1&&hits(pos))pos=freeSlot(ed);
+            return pos;
+        }
+        var pos=place(),fullW=dims.w;
+        if(kind==='стол'&&!psycho){
+            [1.4,1.2,1.0].forEach(function(wd){if((!pos||hits(pos))&&dims.w>wd){dims.w=wd;pos=place()}});
+        }
+        if(!pos||hits(pos))return;
+        var shrunk=dims.w<fullW-0.01?fullW:0;
+        furniturePlaced.push({x:pos.x,z:pos.z,w:pos.w,d:pos.d});
+        if(decor&&decor.picture&&pos.x-pos.w/2<0.4&&Math.abs(pos.z-decor.picZ)<pos.d/2+0.5&&(dims.h||0)>1.0)decor.picture=false;
+        placed.push({x:pos.x,z:pos.z,w:pos.w,d:pos.d});
+        items.push({item:item,dims:dims,pos:pos,shift:item.workplace&&item._chairs?-0.275:0,shrunk:shrunk});
+    });
+    return{psycho:psycho,decor:decor,items:items,roomType:roomType};
+}
+function isPsycho(furniture,roomType){if(roomType&&roomType!=='living')return false;if(!furniture||!furniture.length)return false;for(var i=0;i<furniture.length;i++){var t=(furniture[i].type||'').toLowerCase(),n=(furniture[i].item||'').toLowerCase();if(t.indexOf('статуя')!==-1||n.indexOf('коня')!==-1)return true;}return false;}
+function buildRoomScene(furniture,roomDims,roomType,look){
+    var layout=computeLayout(furniture,roomDims,roomType),psycho=layout.psycho;
+    var scene=new THREE.Scene();
+    scene.background=new THREE.Color(psycho?0xffffff:0x1a1a2e);
+    if(!psycho)scene.fog=new THREE.Fog(0x1a1a2e,15,30);
+    scene.add(new THREE.AmbientLight(psycho?0xffffff:0xfff8f0,psycho?0.40:0.55));
+    var mainLight=new THREE.DirectionalLight(psycho?0xffffff:0xfff3e2,psycho?1.35:0.9);
+    mainLight.position.set(roomDims.width,roomDims.height*2,roomDims.depth);mainLight.castShadow=true;mainLight.shadow.mapSize.width=2048;mainLight.shadow.mapSize.height=2048;mainLight.shadow.camera.near=0.5;mainLight.shadow.camera.far=60;var _sh=Math.max(roomDims.width,roomDims.depth)+2;mainLight.shadow.camera.left=-_sh;mainLight.shadow.camera.right=_sh;mainLight.shadow.camera.top=_sh;mainLight.shadow.camera.bottom=-_sh;mainLight.shadow.bias=-0.0004;mainLight.shadow.normalBias=0.02;mainLight.shadow.radius=3;scene.add(mainLight);
+    var fillLight=new THREE.DirectionalLight(psycho?0xffffff:0xe6f0ff,psycho?0.25:0.4);
+    fillLight.position.set(-roomDims.width,roomDims.height,-roomDims.depth);scene.add(fillLight);
+    var floor=new THREE.Mesh(new THREE.PlaneGeometry(roomDims.width,roomDims.depth),new THREE.MeshStandardMaterial({color:psycho?0xe3e3e3:(look?look.floor:'#3d3425'),roughness:psycho?0.95:0.9}));
+    floor.rotation.x=-Math.PI/2;floor.position.set(roomDims.width/2,0,roomDims.depth/2);floor.receiveShadow=true;scene.add(floor);
+    var grid=new THREE.GridHelper(Math.max(roomDims.width,roomDims.depth),Math.max(roomDims.width,roomDims.depth)*2,psycho?0xcfcfcf:0x5a4a3a,psycho?0xbcbcbc:0x4a3a2a);
+    grid.position.set(roomDims.width/2,0.01,roomDims.depth/2);scene.add(grid);
+    var wallMat=new THREE.MeshStandardMaterial({color:psycho?0xeeeeee:(look?look.wall:'#d4c5b0'),roughness:0.8,side:THREE.DoubleSide});
+    var backWall=new THREE.Mesh(new THREE.PlaneGeometry(roomDims.width,roomDims.height),wallMat);backWall.position.set(roomDims.width/2,roomDims.height/2,0);scene.add(backWall);
+    var leftWall=new THREE.Mesh(new THREE.PlaneGeometry(roomDims.depth,roomDims.height),wallMat);leftWall.rotation.y=Math.PI/2;leftWall.position.set(0,roomDims.height/2,roomDims.depth/2);scene.add(leftWall);
+    var edgeMat=new THREE.LineBasicMaterial({color:psycho?0xcccccc:0x8a7a6a});
+    var boxEdges=new THREE.EdgesGeometry(new THREE.BoxGeometry(roomDims.width,roomDims.height,roomDims.depth));
+    var boxLines=new THREE.LineSegments(boxEdges,edgeMat);boxLines.position.set(roomDims.width/2,roomDims.height/2,roomDims.depth/2);scene.add(boxLines);
+    var windowGroup=new THREE.Group(),pictureGroup=new THREE.Group();scene.add(windowGroup,pictureGroup);
+    if(!psycho&&layout.decor){
+    var rug=new THREE.Mesh(new THREE.PlaneGeometry(roomDims.width*0.5,roomDims.depth*0.5),new THREE.MeshStandardMaterial({color:0x7d5a5a,roughness:1}));
+    rug.visible=!layout.items.some(function(li){return kindOf(li.item)==='ковёр'});
+    rug.rotation.x=-Math.PI/2;rug.position.set(roomDims.width/2,0.02,roomDims.depth/2);rug.receiveShadow=true;scene.add(rug);
+    var skirtMat=new THREE.MeshStandardMaterial({color:0xf0ead6,roughness:0.6});
+    var skirt1=new THREE.Mesh(new THREE.BoxGeometry(roomDims.width,0.1,0.03),skirtMat);
+    skirt1.position.set(roomDims.width/2,0.05,0.015);scene.add(skirt1);
+    var skirt2=new THREE.Mesh(new THREE.BoxGeometry(0.03,0.1,roomDims.depth),skirtMat);
+    skirt2.position.set(0.015,0.05,roomDims.depth/2);scene.add(skirt2);
+    var winW=1.4,winH=1.2,winY=1.5,winX=layout.decor.winX;
+    var frame=new THREE.Mesh(new THREE.BoxGeometry(winW+0.1,winH+0.1,0.06),new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.4}));
+    frame.position.set(winX,winY,0.03);windowGroup.add(frame);
+    var glass=new THREE.Mesh(new THREE.PlaneGeometry(winW,winH),new THREE.MeshStandardMaterial({color:0x87CEEB,emissive:0x87CEEB,emissiveIntensity:0.6,transparent:true,opacity:0.7}));
+    glass.position.set(winX,winY,0.07);glass.userData.window=true;windowGroup.add(glass);
+    var cross1=new THREE.Mesh(new THREE.BoxGeometry(winW,0.04,0.08),skirtMat);cross1.position.set(winX,winY,0.08);windowGroup.add(cross1);
+    var cross2=new THREE.Mesh(new THREE.BoxGeometry(0.04,winH,0.08),skirtMat);cross2.position.set(winX,winY,0.08);windowGroup.add(cross2);
+    var picFrame=new THREE.Mesh(new THREE.BoxGeometry(0.04,0.7,0.9),new THREE.MeshStandardMaterial({color:0x8B6F47,roughness:0.5}));
+    picFrame.position.set(0.02,1.6,layout.decor.picZ);pictureGroup.add(picFrame);
+    var pic=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.6,0.8),new THREE.MeshStandardMaterial({color:0x2F4F4F,roughness:0.5}));
+    pic.position.set(0.03,1.6,layout.decor.picZ);pictureGroup.add(pic);
+    if(!layout.decor.picture){picFrame.visible=false;pic.visible=false}
+    var cordMat=new THREE.MeshStandardMaterial({color:0x333333});
+    var cord=new THREE.Mesh(new THREE.CylinderGeometry(0.01,0.01,0.4,6),cordMat);
+    cord.position.set(roomDims.width/2,roomDims.height-0.2,roomDims.depth/2);scene.add(cord);
+    var lampShade=new THREE.Mesh(new THREE.ConeGeometry(0.3,0.25,16,1,true),new THREE.MeshStandardMaterial({color:0x222222,roughness:0.5,side:THREE.DoubleSide}));
+    lampShade.position.set(roomDims.width/2,roomDims.height-0.45,roomDims.depth/2);scene.add(lampShade);
+    var bulb=new THREE.Mesh(new THREE.SphereGeometry(0.08,12,12),new THREE.MeshStandardMaterial({color:0xffffaa,emissive:0xffffaa,emissiveIntensity:1.2}));
+    bulb.position.set(roomDims.width/2,roomDims.height-0.5,roomDims.depth/2);scene.add(bulb);
+    var ceilLight=new THREE.PointLight(0xffe4b5,0.7,12);
+    ceilLight.position.set(roomDims.width/2,roomDims.height-0.6,roomDims.depth/2);
+    scene.add(ceilLight);
+    
+        }
+    var W=roomDims.width,D=roomDims.depth,Hh=roomDims.height;
+    var photoOnly=new THREE.Group();photoOnly.visible=false;
+    var rightWall=new THREE.Mesh(new THREE.PlaneGeometry(D,Hh),wallMat);rightWall.rotation.y=-Math.PI/2;rightWall.position.set(W,Hh/2,D/2);photoOnly.add(rightWall);
+    var frontWall=new THREE.Mesh(new THREE.PlaneGeometry(W,Hh),wallMat);frontWall.rotation.y=Math.PI;frontWall.position.set(W/2,Hh/2,D);photoOnly.add(frontWall);
+    var ceiling=new THREE.Mesh(new THREE.PlaneGeometry(W,D),new THREE.MeshStandardMaterial({color:0xf4f1ea,side:THREE.DoubleSide}));ceiling.rotation.x=Math.PI/2;ceiling.position.set(W/2,Hh,D/2);photoOnly.add(ceiling);
+    var ext=2.6,shells={};
+    [['front',W/2,D,0],['back',W/2,0,Math.PI],['left',0,D/2,-Math.PI/2],['right',W,D/2,Math.PI/2]].forEach(function(sd){
+        var along=(sd[0]==='front'||sd[0]==='back')?W:D,g=new THREE.Group();
+        var f=new THREE.Mesh(new THREE.PlaneGeometry(along,ext),floor.material);f.rotation.x=-Math.PI/2;f.position.set(0,0,ext/2);
+        var c=new THREE.Mesh(new THREE.PlaneGeometry(along,ext),ceiling.material);c.rotation.x=Math.PI/2;c.position.set(0,Hh,ext/2);
+        var a=new THREE.Mesh(new THREE.PlaneGeometry(ext,Hh),wallMat);a.rotation.y=Math.PI/2;a.position.set(-along/2,Hh/2,ext/2);
+        var b=new THREE.Mesh(new THREE.PlaneGeometry(ext,Hh),wallMat);b.rotation.y=-Math.PI/2;b.position.set(along/2,Hh/2,ext/2);
+        g.add(f,c,a,b);g.position.set(sd[1],0,sd[2]);g.rotation.y=sd[3];g.visible=false;photoOnly.add(g);shells[sd[0]]=g;
+    });
+    scene.add(photoOnly);
+    var furnitureGroups=[];
+    layout.items.forEach(function(li,idx){
+        var model=createFurnitureModel(li.item,li.dims,psycho);
+        attachCompanions(model,li.item,li.dims,psycho,roomType);
+        if(li.shift)model.children.forEach(function(c){c.position.z+=li.shift});
+        model.position.set(li.pos.x,0,li.pos.z);model.rotation.y=li.pos.rot||0;
+        model.userData={furniture:li.item,index:idx};
+        scene.add(model);furnitureGroups.push(model);
+    });
+    return{scene:scene,layout:layout,psycho:psycho,furnitureGroups:furnitureGroups,helpers:[grid,boxLines],photoOnly:photoOnly,shells:shells,
+        walls:{front:[frontWall],back:[backWall,windowGroup],left:[leftWall,pictureGroup],right:[rightWall]},
+        wallMat:wallMat,floorMat:floor.material,ceiling:ceiling};
+}
+
+function init3DRoom(container,furniture,roomDims,roomType,look){
+    var built=buildRoomScene(furniture,roomDims,roomType,look),scene=built.scene,psycho=built.psycho,furnitureGroups=built.furnitureGroups;
+    container.innerHTML='';
+    var h=document.createElement('div');h.className='room-3d-header';
+    h.innerHTML='<div class="room-3d-title">'+(psycho?'🌀 Психодел':'🏠 3D Комната')+'</div><div class="room-3d-controls">🖱️ Вращение • Колёсико — зум</div>';
+    container.appendChild(h);
+    var width=container.clientWidth,height=container.clientHeight-50;
+    if(width===0||height===0)return null;
+    if(typeof THREE.OrbitControls==='undefined'){console.error('OrbitControls не загружен');return null}
+    var maxDim=Math.max(roomDims.width,roomDims.depth);
+    var camera=new THREE.PerspectiveCamera(50,width/height,0.1,1000);
+    camera.position.set(maxDim*1.5,maxDim*1.2,maxDim*1.8);
+    camera.lookAt(roomDims.width/2,0,roomDims.depth/2);
+    var renderer=new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(width,height);renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+    var controls=new THREE.OrbitControls(camera,renderer.domElement);
+    controls.enableDamping=true;controls.dampingFactor=0.05;
+    controls.target.set(roomDims.width/2,roomDims.height/2,roomDims.depth/2);
+    controls.maxPolarAngle=Math.PI/2.1;controls.minDistance=0.5;controls.maxDistance=20;
+    var flight=null,hiddenForPhoto=[];
+    function restoreView(){
+        hiddenForPhoto.forEach(function(o){o.visible=true});hiddenForPhoto=[];
+        if(camera.fov!==50){camera.fov=50;camera.updateProjectionMatrix()}
+    }
+    controls.addEventListener('start',function(){flight=null;restoreView()});
+    controls.addEventListener('change',function(){if(typeof syncViewMarker==='function')syncViewMarker(camera,controls.target)});
+    function flyTo(info){
+        restoreView();
+        if(info.side&&built.walls[info.side])built.walls[info.side].forEach(function(o){if(o.visible){o.visible=false;hiddenForPhoto.push(o)}});
+        flight={t0:performance.now(),dur:1800,p0:camera.position.clone(),q0:controls.target.clone(),f0:camera.fov,
+            p1:new THREE.Vector3(info.x,1.6,info.z),q1:new THREE.Vector3(info.tx,1.0,info.tz),f1:70};
+    }
+    function stepFlight(now){
+        if(!flight)return;
+        var k=Math.min((now-flight.t0)/flight.dur,1),e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+        camera.position.lerpVectors(flight.p0,flight.p1,e);controls.target.lerpVectors(flight.q0,flight.q1,e);
+        camera.fov=flight.f0+(flight.f1-flight.f0)*e;camera.updateProjectionMatrix();
+        if(k>=1)flight=null;
+    }
+    var raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2(),hoveredGroup=null;
+    function getAllMeshes(){var m=[];furnitureGroups.forEach(function(g){g.traverse(function(c){if(c.isMesh)m.push(c)})});return m}
+    renderer.domElement.addEventListener('mousemove',function(event){
+        if(fixedTooltip)return;
+        var rect=renderer.domElement.getBoundingClientRect();
+        mouse.x=((event.clientX-rect.left)/rect.width)*2-1;mouse.y=-((event.clientY-rect.top)/rect.height)*2+1;
+        raycaster.setFromCamera(mouse,camera);
+        var its=raycaster.intersectObjects(getAllMeshes(),false),found=null;
+        if(its.length>0){var o=its[0].object;while(o&&!o.userData.furniture)o=o.parent;if(o&&o.userData.furniture)found=o}
+        if(found&&found!==hoveredGroup){
+            if(hoveredGroup)hoveredGroup.traverse(function(c){if(c.material)c.material.emissiveIntensity=0});
+            hoveredGroup=found;hoveredGroup.traverse(function(c){if(c.material&&c.material.emissive)c.material.emissiveIntensity=0.2});
+            renderer.domElement.style.cursor='pointer';showTooltip3D(event,found.userData.furniture,false);
+        }else if(!found&&hoveredGroup){
+            hoveredGroup.traverse(function(c){if(c.material&&c.material.emissive)c.material.emissiveIntensity=0});
+            hoveredGroup=null;renderer.domElement.style.cursor='grab';hideTooltip3D();
+        }
+    });
+    renderer.domElement.addEventListener('click',function(event){
+        var rect=renderer.domElement.getBoundingClientRect();
+        mouse.x=((event.clientX-rect.left)/rect.width)*2-1;mouse.y=-((event.clientY-rect.top)/rect.height)*2+1;
+        raycaster.setFromCamera(mouse,camera);
+        var its=raycaster.intersectObjects(getAllMeshes(),false),found=null;
+        if(its.length>0){var o=its[0].object;while(o&&!o.userData.furniture)o=o.parent;if(o&&o.userData.furniture)found=o}
+        if(found){if(fixedTooltip===found){fixedTooltip=null;hideTooltip3D()}else{fixedTooltip=found;showTooltip3D(event,found.userData.furniture,true)}}else{fixedTooltip=null;hideTooltip3D()}
+    });
+    renderer.domElement.addEventListener('mouseleave',function(){if(!fixedTooltip){if(hoveredGroup){hoveredGroup.traverse(function(c){if(c.material&&c.material.emissive)c.material.emissiveIntensity=0});hoveredGroup=null}hideTooltip3D()}});
+    var rafId;
+    function animate(now){rafId=requestAnimationFrame(animate);stepFlight(now||performance.now());controls.update();renderer.render(scene,camera)}
+    animate();
+    var ro=new ResizeObserver(function(){var w=container.clientWidth,hh=container.clientHeight-50;if(w>0&&hh>0){camera.aspect=w/hh;camera.updateProjectionMatrix();renderer.setSize(w,hh)}});
+    ro.observe(container);
+    if(typeof syncViewMarker==='function')setTimeout(function(){syncViewMarker(camera,controls.target)},0);
+    return{scene:scene,camera:camera,renderer:renderer,controls:controls,flyTo:flyTo,dispose:function(){cancelAnimationFrame(rafId);ro.disconnect();controls.dispose();renderer.dispose();renderer.forceContextLoss()}}
+}
+
+function showTooltip3D(event,item,pinned){
+    var tooltip=document.getElementById('active-tooltip');
+    if(!tooltip){tooltip=document.createElement('div');tooltip.id='active-tooltip';tooltip.className='furniture-tooltip';document.body.appendChild(tooltip)}
+    var specs='';
+    if(item.materials)specs+='<div class="tooltip-spec"><span class="tooltip-spec-icon">🪵</span><span class="tooltip-spec-label">Материалы:</span><span class="tooltip-spec-value">'+esc(item.materials)+'</span></div>';
+    if(item.dimensions)specs+='<div class="tooltip-spec"><span class="tooltip-spec-icon">📏</span><span class="tooltip-spec-label">Размеры:</span><span class="tooltip-spec-value">'+esc(item.dimensions)+' см</span></div>';
+    if(item.price)specs+='<div class="tooltip-spec"><span class="tooltip-spec-icon">💰</span><span class="tooltip-spec-label">Цена:</span><span class="tooltip-spec-value price">'+formatPrice(item.price)+'</span></div>';
+    specs+='<div style="margin-top:0.8rem;padding-top:0.8rem;border-top:1px solid rgba(255,165,0,0.3)"><button class="btn-search" onclick="searchFurniture(\''+esc(item.item).replace(/'/g,"\\'")+'\',\''+esc(item.type).replace(/'/g,"\\'")+'\')" style="width:100%;justify-content:center">🔍 Найти в DuckDuckGo</button></div>';
+    tooltip.innerHTML='<button class="tooltip-close" onclick="closeFixedTooltip()">✕</button><div class="tooltip-header"><span class="tooltip-icon">'+getIcon(item.type,item.item)+'</span><span class="tooltip-title">'+esc(item.item)+'</span><span class="tooltip-type">'+esc(item.type)+'</span></div><p class="tooltip-desc">'+esc(item.description||'')+'</p><div class="tooltip-specs">'+specs+'</div>';
+    tooltip.classList.add('visible');
+    if(pinned){tooltip.classList.add('pinned');tooltip.style.left=(event.clientX+20)+'px';tooltip.style.top=(event.clientY+20)+'px'}
+    else{tooltip.classList.remove('pinned');tooltip.style.left=(event.clientX+20)+'px';tooltip.style.top=(event.clientY+20)+'px'}
+}
+function closeFixedTooltip(){fixedTooltip=null;hideTooltip3D()}
+function hideTooltip3D(){var t=document.getElementById('active-tooltip');if(t){t.classList.remove('visible');t.classList.remove('pinned')}}
+
+function loadHistory(){
+    if(!currentUserId)return;
+    fetch('/history?user_id='+currentUserId).then(function(r){return r.json()}).then(function(data){
+        if(!Array.isArray(data)){renderHistory([]);return}
+        renderHistory(data);
+    }).catch(function(e){console.error(e)})
+}
+
+function deleteFromHistory(id){if(!confirm('Удалить?'))return;fetch('/history/'+id,{method:'DELETE'}).then(function(){loadHistory()}).catch(function(e){console.error(e)})}
+function clearHistory(){if(!confirm('Удалить всю историю?'))return;fetch('/history?user_id='+currentUserId,{method:'DELETE'}).then(function(){loadHistory()}).catch(function(e){console.error(e)})}
+
+function getPlural(n,forms){var m10=n%10,m100=n%100;if(m100>=11&&m100<=19)return forms[2];if(m10===1)return forms[0];if(m10>=2&&m10<=4)return forms[1];return forms[2]}
+
+var ROOM_TYPES={living:'Гостиная',bedroom:'Спальня',kitchen:'Кухня',office:'Кабинет',bathroom:'Санузел'};
+var ROOM_ICONS={living:'🛋️',bedroom:'🛏️',kitchen:'🍳',office:'💼',bathroom:'🛁',apartment:'🏢'};
+var ZONES={living:'+ гостиная',bedroom:'+ спальня',office:'+ рабочее место'};
+var DIVIDER_NAMES={'шкаф':'шкаф','стеллаж':'стеллаж','полка':'книжная полка'};
+function roomIcon(type){return ROOM_ICONS[String(type||'').split('+')[0]]||'🏠'}
+var rooms=[{type:'living',width:5,length:4}];
+var BATH={type:'bathroom',width:2.1,length:1.7};
+var PRESETS={
+ studio:[{type:'living',width:5.2,length:4.2},{type:'kitchen',width:3,length:2.6},BATH],
+ one:[{type:'living',width:4.4,length:4},{type:'kitchen',width:3.2,length:3},BATH],
+ zoned:[{type:'living',width:5.6,length:4,zone:'bedroom',divider:'шкаф'},{type:'kitchen',width:3.2,length:3},BATH],
+ two:[{type:'living',width:5,length:3.8},{type:'bedroom',width:4,length:3.5},{type:'kitchen',width:3.3,length:3},BATH],
+ three:[{type:'living',width:5.2,length:4},{type:'bedroom',width:4,length:3.6},{type:'office',width:3.4,length:3},{type:'kitchen',width:3.6,length:3},BATH]
+};
+var current3D=null,currentRoomIdx=0;
+
+function roomArea(r){return(parseFloat(r.width)||0)*(parseFloat(r.length)||0)}
+function fmtArea(r){var a=roomArea(r);return a?a.toFixed(1)+' м²':'—'}
+function numField(i,f,label,v,min,max){return'<div><label>'+label+'</label><input type="number" step="0.1" min="'+min+'" max="'+max+'" value="'+v+'" oninput="updateRoom('+i+',\''+f+'\',this.value)"></div>'}
+function zoneField(r,i){
+    if(!ZONES[r.type])return'';
+    var opts='<option value="">без зонирования</option>'+Object.keys(ZONES).filter(function(z){return z!==r.type}).map(function(z){return'<option value="'+z+'"'+(r.zone===z?' selected':'')+'>'+ZONES[z]+'</option>'}).join('');
+    var div=r.zone?'<label>перегородка</label><select onchange="updateRoom('+i+',\'divider\',this.value)">'+Object.keys(DIVIDER_NAMES).map(function(d){return'<option value="'+d+'"'+((r.divider||'стеллаж')===d?' selected':'')+'>'+DIVIDER_NAMES[d]+'</option>'}).join('')+'</select>':'';
+    return'<div class="room-zone"><label>Зонирование</label><select onchange="updateRoom('+i+',\'zone\',this.value)">'+opts+'</select>'+div+'</div>';
+}
+function renderRooms(){
+    document.getElementById('rooms-editor').innerHTML=rooms.map(function(r,i){
+        var opts=Object.keys(ROOM_TYPES).map(function(k){return'<option value="'+k+'"'+(k===r.type?' selected':'')+'>'+ROOM_TYPES[k]+'</option>'}).join('');
+        return'<div class="room-row"><div class="rt"><label>Комната '+(i+1)+'</label><select onchange="updateRoom('+i+',\'type\',this.value)">'+opts+'</select></div>'
+            +numField(i,'length','Длина, м',r.length,1.5,15)+numField(i,'width','Ширина, м',r.width,1.5,15)
+            +'<div class="room-area" id="room-area-'+i+'">'+fmtArea(r)+'</div>'
+            +'<button type="button" class="room-remove" title="Удалить комнату" onclick="removeRoom('+i+')"'+(rooms.length<2?' disabled':'')+'>✕</button>'
+            +zoneField(r,i)
+            +'<div class="room-wish"><input type="text" maxlength="500" placeholder="Пожелания к этой комнате: например, рабочее место у окна, 4 стула" value="'+esc(r.wishes||'')+'" oninput="updateRoom('+i+',\'wishes\',this.value)"></div></div>';
+    }).join('');
+    updateRoomsSummary();
+}
+function updateRoomsSummary(){
+    var total=rooms.reduce(function(s,r){return s+roomArea(r)},0);
+    document.getElementById('rooms-summary').textContent='Итого: '+rooms.length+' '+getPlural(rooms.length,['помещение','помещения','помещений'])+' · '+total.toFixed(1)+' м²';
+}
+function updateRoom(i,f,v){
+    rooms[i][f]=(f==='type'||f==='wishes'||f==='zone'||f==='divider')?(v||null):parseFloat(v);
+    if(f==='type'&&(!ZONES[v]||rooms[i].zone===v))rooms[i].zone=null;
+    if(f==='type'||f==='zone'){renderRooms();return}
+    var a=document.getElementById('room-area-'+i);if(a)a.textContent=fmtArea(rooms[i]);
+    updateRoomsSummary();
+    document.querySelectorAll('.template-btn').forEach(function(b){b.classList.remove('active')});
+}
+function addRoom(){if(rooms.length>=6){alert('Максимум 6 помещений за раз');return}rooms.push({type:'bedroom',width:3.5,length:3.2});renderRooms()}
+function removeRoom(i){if(rooms.length<2)return;rooms.splice(i,1);renderRooms()}
+function applyPreset(name,btn){
+    var p=PRESETS[name];if(!p)return;
+    rooms=p.map(function(r){return{type:r.type,width:r.width,length:r.length,zone:r.zone||null,divider:r.divider||null}});
+    renderRooms();
+    document.getElementById('open-plan').checked=name==='studio';
+    document.querySelectorAll('.template-btn').forEach(function(b){b.classList.remove('active')});btn.classList.add('active');
+}
+function ceilingHeight(){return parseFloat(document.getElementById('ceiling-height').value)}
+function validateRooms(){
+    var h=ceilingHeight();
+    if(!(h>=2&&h<=5))return'Высота потолков — от 2 до 5 м';
+    for(var i=0;i<rooms.length;i++){var r=rooms[i];
+        if(!(r.width>=1.5&&r.width<=15&&r.length>=1.5&&r.length<=15))return'Комната '+(i+1)+': длина и ширина — от 1.5 до 15 м';
+
+    }
+    return null;
+}
+
+var STAGE_TEXT={queued:'⏳ В очереди...',text:'🧠 Нейросеть проектирует интерьер...',done:'✅ Готово!'};
+function stepsHTML(stage){
+    var order=['queued','text','done'],idx=Math.max(order.indexOf(stage),0),labels=['Очередь','Проект','Готово'];
+    return labels.map(function(l,i){return'<span class="progress-step '+(i<idx||stage==='done'?'done':(i===idx?'active':''))+'">'+l+'</span>'}).join('');
+}
+function progressPct(info){
+    var total=info.room_total||1,idx=(info.room_index||1)-1,frac={queued:0,text:0.5,done:1}[info.stage]||0;
+    if(info.stage==='queued')return 4;
+    return Math.min(100,Math.round((idx+frac)/total*100));
+}
+function progressHTML(info){
+    return'<div class="loader-mini"><div class="ring ring-1"></div><div class="ring ring-2"></div><div class="core"></div></div>'
+        +'<p class="loader-text" id="loader-text">'+STAGE_TEXT[info.stage||'queued']+'</p>'
+        +'<p class="order-note" id="loader-room"></p>'
+        +'<div class="progress-container"><div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:'+progressPct(info)+'%"></div></div>'
+        +'<div class="progress-steps" id="progress-steps">'+stepsHTML(info.stage||'queued')+'</div></div>';
+}
+function updateProgress(info){
+    var lt=document.getElementById('loader-text');if(!lt){document.getElementById('ai-output').innerHTML=progressHTML(info);lt=document.getElementById('loader-text')}
+    lt.textContent=info.message&&info.stage!=='queued'?info.message:STAGE_TEXT[info.stage||'queued'];
+    var lr=document.getElementById('loader-room');if(lr)lr.textContent=info.room_total>1?'Помещение '+info.room_index+' из '+info.room_total:'';
+    document.getElementById('progress-fill').style.width=progressPct(info)+'%';
+    document.getElementById('progress-steps').innerHTML=stepsHTML(info.stage||'queued');
+}
+function setGenerating(on){var b=document.getElementById('generate-btn');b.disabled=on;b.textContent=on?'Генерация...':'Сгенерировать дизайн'}
+function showError(msg){setGenerating(false);document.getElementById('ai-output').innerHTML='<div class="error-box"><p style="font-size:2rem;margin-bottom:1rem">⚠️</p><p style="color:#ff6b6b">'+esc(msg)+'</p></div>'}
+function apiError(d){if(!d||!d.detail)return'Ошибка сервера';if(typeof d.detail==='string')return d.detail;return d.detail.map(function(e){return e.msg}).join('; ')}
+
+function generateAI(){
+    if(!currentUserId){alert('Сначала создайте пользователя');return}
+    var err=validateRooms();if(err){alert(err);return}
+    var output=document.getElementById('ai-output');
+    var payload={
+        user_id:currentUserId,
+        rooms:rooms.map(function(r){return{type:r.type,zone:r.zone||null,divider:r.divider||'стеллаж',width:r.width,length:r.length,height:ceilingHeight(),wishes:(r.wishes||'').trim()}}),
+        style:document.getElementById('room-style').value,
+        budget:parseInt(document.getElementById('room-budget').value,10)||null,
+        description:document.getElementById('room-desc').value.trim(),
+        open_plan:document.getElementById('open-plan').checked
+    };
+    dispose3D();setGenerating(true);
+    output.innerHTML=progressHTML({stage:'queued'});
+    output.scrollIntoView({behavior:'smooth',block:'start'});
+    fetch('/generate-design',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+        .then(function(r){return r.json().then(function(d){if(!r.ok)throw new Error(apiError(d));return d})})
+        .then(function(data){if(!data.task_id)throw new Error('Не получен task_id');pollTaskStatus(data.task_id)})
+        .catch(function(e){if(pollingInterval){clearInterval(pollingInterval);pollingInterval=null}showError(e.message)});
+}
+function pollTaskStatus(taskId){
+    if(pollingInterval)clearInterval(pollingInterval);
+    pollingInterval=setInterval(function(){
+        fetch('/task-status/'+taskId).then(function(r){return r.json()}).then(function(data){
+            if(data.status==='queued')updateProgress({stage:'queued'});
+            else if(data.status==='processing')updateProgress(data);
+            else if(data.status==='completed'){clearInterval(pollingInterval);pollingInterval=null;setGenerating(false);displayResult(data.result,false);loadHistory()}
+            else if(data.status==='failed'){clearInterval(pollingInterval);pollingInterval=null;showError(data.error||'Ошибка генерации')}
+        }).catch(function(e){console.error(e)});
+    },2000);
+}
+
+function dispose3D(){if(current3D&&current3D.dispose)current3D.dispose();current3D=null;fixedTooltip=null;hideTooltip3D()}
+function shopLinksHTML(it){return(it.shops||[]).map(function(s){return'<a class="shop-link" href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.store)+'</a>'}).join('')}
+function renderFurnitureItem(item){
+    var d='';
+    if(item.materials)d+='<span class="product-detail materials">🪵 '+esc(item.materials)+'</span>';
+    if(item.dimensions)d+='<span class="product-detail dimensions">📏 '+esc(item.dimensions)+' см</span>';
+    if(item.price)d+='<span class="product-detail price">💰 '+((item.qty||1)>1?item.qty+' × '+formatPrice(item.unit_price)+' = ':'')+formatPrice(item.price)+'</span>';
+    d+='<button class="btn-search" data-q="'+encodeURIComponent(item.search_query||item.item||'')+'">🔍 Поиск</button>';
+    var shops=item.shops&&item.shops.length?'<div class="shop-links" style="margin-top:.6rem"><span class="order-note">Заказать:</span>'+shopLinksHTML(item)+'</div>':'';
+    return'<div class="product-item"><div class="product-header"><span class="product-name">'+getIcon(item.type,item.item)+' '+esc(item.item)+'</span><span class="product-type">'+esc(item.type)+'</span></div><p class="product-desc">'+esc(item.description||'')+'</p><div class="product-details">'+d+'</div>'+shops+'</div>';
+}
+function roomPanelHTML(r,i){
+    var side='<div class="room-photo" data-room="'+i+'"></div>';
+    if(r.wishes)side+='<div class="panel"><h4>📝 Пожелания</h4><p>'+esc(r.wishes)+'</p></div>';
+    if(r.concept)side+='<div class="panel"><h4>💡 Концепция</h4><p>'+esc(r.concept)+'</p></div>';
+    if(r.palette&&r.palette.length)side+='<div class="panel"><h4>🎨 Палитра</h4><div class="palette">'+r.palette.map(function(p){var hex=/^#[0-9a-fA-F]{6}$/.test(p.hex)?p.hex:'#888888';return'<div class="swatch"><button type="button" class="swatch-color" title="Покрасить стены в этот цвет" onclick="setWallColor('+i+',\''+hex+'\')" style="background:'+hex+'"></button><div class="swatch-name">'+esc(p.name)+'</div><div class="swatch-hex">'+hex+'</div></div>'}).join('')+'</div></div>';
+    var lk=roomLook(r);
+    side+='<div class="panel"><h4>🧱 Цвет стен</h4><div class="wall-color"><input type="color" value="'+lk.wall+'" onchange="setWallColor('+i+',this.value)" aria-label="Цвет стен"><span>'+esc(lk.wallName)+' стены · пол: '+esc(lk.floorName)+'</span></div><p class="order-note">Выберите цвет или нажмите на цвет палитры — 3D и фото перерисуются.</p></div>';
+    if(r.lighting)side+='<div class="panel"><h4>🔆 Освещение</h4><p>'+esc(r.lighting)+'</p></div>';
+    var d=r.room_dimensions||{};
+    var psy=isPsycho(r.furniture,r.room_type)?'<div class="chip" style="margin-bottom:.8rem;display:inline-block">🌀 Схема: Психодел</div>':'';
+    return psy+'<div class="room-grid"><div><div class="room-3d-container" id="room-3d-container"></div><div class="room-3d-tools"><p class="order-note">'+esc(r.room_name)+': '+d.width+' × '+d.depth+' м, потолок '+d.height+' м · 3D-схема расстановки</p><button type="button" class="btn-secondary photo-redo" onclick="flyToPhoto('+i+')">🎬 Пролёт к ракурсу фото</button></div></div><div class="room-side">'+side+'</div></div>'
+        +'<div class="result-products"><h4>🛋️ Мебель — '+esc(r.room_name)+'</h4>'+(r.furniture.length?r.furniture.map(renderFurnitureItem).join(''):'<p style="color:#888">Не удалось распознать мебель</p>')+'</div>';
+}
+function budgetHTML(res){
+    if(!res.budget)return'';
+    var pct=res.total/res.budget,over=pct>1;
+    return'<div class="budget-box"><div class="budget-line"><span>Смета: <b>'+formatPrice(res.total)+'</b> из бюджета '+formatPrice(res.budget)+'</span><span class="'+(over?'budget-over':'budget-ok')+'">'+(over?'Превышение на '+formatPrice(res.total-res.budget):'Укладываемся, запас '+formatPrice(res.budget-res.total))+'</span></div><div class="progress-bar"><div class="progress-fill'+(over?' over':'')+'" style="width:'+Math.min(pct*100,100)+'%"></div></div></div>';
+}
+function namesIn3D(room){
+    var shown={};
+    computeLayout(room.furniture,room.room_dimensions,room.room_type).items.forEach(function(li){
+        shown[li.item.item]=li.shrunk?{from:li.shrunk,to:li.dims.w}:1;
+        if(li.item._chairs&&li.item._chairItem)shown[li.item._chairItem.item]=1;
+    });
+    return shown;
+}
+function orderHTML(res){
+    var rows='';
+    res.rooms.forEach(function(r){
+        var shown=namesIn3D(r);
+        rows+='<tr class="order-group"><td colspan="2">'+roomIcon(r.room_type)+' '+esc(r.room_name)+' · '+r.area+' м²</td><td class="num">'+formatPrice(r.subtotal)+'</td><td></td></tr>';
+        r.furniture.concat(r.materials||[]).forEach(function(it){
+            var note=it.note||(it.dimensions?it.dimensions+' см':'');
+            if(it.category==='furniture'&&!shown[it.item]&&kindOf(it)!=='техника')note+=(note?' · ':'')+'нет на 3D-схеме: не поместилось';
+            var sh=shown[it.item];
+            if(sh&&sh.from)note+=(note?' · ':'')+'⚠️ '+Math.round(sh.from*100)+' см не помещается, на схеме '+Math.round(sh.to*100)+' см — лучше взять такой';
+            rows+='<tr><td>'+esc(it.item)+(note?'<div class="order-note">'+esc(note)+'</div>':'')+'</td><td class="num">'+(it.qty||1)+' '+esc(it.unit||'шт')+'</td><td class="num">'+formatPrice(it.price)+'</td><td><div class="shop-links">'+(shopLinksHTML(it)||'<button class="btn-search" data-q="'+encodeURIComponent(it.search_query||it.item||'')+'">🔍 Поиск</button>')+'</div></td></tr>';
+        });
+    });
+    rows+='<tr class="order-total"><td colspan="2">Итого</td><td class="num">'+formatPrice(res.total)+'</td><td></td></tr>';
+    return'<div class="result-products"><h4>🛒 Что и где заказать</h4><div class="table-wrap"><table class="order-table"><thead><tr><th>Позиция</th><th class="num">Кол-во</th><th class="num">Сумма</th><th>Где купить</th></tr></thead><tbody>'+rows+'</tbody></table></div><p class="order-note" style="margin-top:.8rem">Цены ориентировочные — их оценивает нейросеть. Количество отделки посчитано по обмерам. Ссылки открывают поиск товара в магазине.</p></div>';
+}
+function displayResult(res,fromHistory){
+    dispose3D();
+    currentResult=res;currentRoomIdx=0;
+    var chips=['🏠 '+res.rooms.length+' '+getPlural(res.rooms.length,['помещение','помещения','помещений']),'📐 '+res.total_area+' м²','🎨 '+esc(res.style)];
+    if(res.time_sec&&res.time_sec!=='—')chips.push('⏱️ '+res.time_sec+' сек');
+    if(fromHistory&&res.date)chips.push('📅 '+res.date);
+    var tabs=res.rooms.length>1?'<div class="room-tabs">'+res.rooms.map(function(r,i){return'<button type="button" class="room-tab" onclick="showRoom('+i+')">'+roomIcon(r.room_type)+' '+esc(r.room_name)+' · '+r.area+' м²</button>'}).join('')+'</div>':'';
+    document.getElementById('ai-output').innerHTML='<div class="result-card"><div class="result-head"><h3>'+(fromHistory?'📂 Проект из истории':'✨ Проект готов')+'</h3><div class="chips">'+chips.map(function(c){return'<span class="chip">'+c+'</span>'}).join('')+'</div></div>'
+        +budgetHTML(res)
+        +'<div class="view-toggle"><button type="button" data-view="plan" onclick="setView(\'plan\')">🗺️ План квартиры</button><button type="button" data-view="3d" onclick="setView(\'3d\')">🧊 3D по комнатам</button></div>'
+        +'<div id="plan-view" hidden><div class="plan-wrap"><div id="plan-2d"></div></div><p class="order-note">Вид сверху, масштаб соблюдён. Голубым — окна, дугой — двери, зелёным — вход, жёлтым — камера и поле зрения для фото комнаты, красным пунктиром — стена, убранная на время съёмки. Нажмите на комнату, чтобы открыть её в 3D.</p></div>'
+        +'<div id="room-view">'+tabs+'<div id="room-panel"></div></div>'+orderHTML(res)
+        +'<p style="color:#666;font-size:0.8rem;margin-top:1rem">'+(res.model?'Модель: '+esc(res.model):'')+'</p>'
+        +'<div style="display:flex;gap:0.8rem;justify-content:center;margin-top:1rem;flex-wrap:wrap"><button class="btn-export" onclick="exportResult(\'csv\')">📊 Смета CSV</button><button class="btn-export" onclick="exportResult(\'txt\')">📄 Скачать TXT</button><button class="btn-export" onclick="exportResult(\'json\')">📥 Скачать JSON</button></div></div>';
+    setView('3d');
+    queueAllRoomPhotos();
+}
+function setView(v){
+    document.querySelectorAll('.view-toggle button').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-view')===v)});
+    document.getElementById('plan-view').hidden=v!=='plan';
+    document.getElementById('room-view').hidden=v==='plan';
+    if(v==='plan'){dispose3D();renderPlan2D(document.getElementById('plan-2d'),currentResult.rooms,function(i){setView('3d');showRoom(i)},{cameras:true,openPlan:!!currentResult.open_plan})}
+    else showRoom(currentRoomIdx);
+}
+function showRoom(i){
+    dispose3D();currentRoomIdx=i;
+    document.querySelectorAll('.room-tab').forEach(function(b,j){b.classList.toggle('active',j===i)});
+    var r=currentResult.rooms[i];
+    document.getElementById('room-panel').innerHTML=roomPanelHTML(r,i);
+    refreshPhotoSlot(i);
+    if(r.furniture.length)setTimeout(function(){var c=document.getElementById('room-3d-container');if(c&&currentRoomIdx===i)current3D=init3DRoom(c,r.furniture,r.room_dimensions,r.room_type,roomLook(r))},100);
+}
+
+function exportResult(format){
+    var res=currentResult;if(!res)return;
+    var c='',f='black-hole-design_'+Date.now(),m='';
+    if(format==='json'){c=JSON.stringify(res,function(k,v){return k==='image_url'?undefined:v},2);f+='.json';m='application/json'}
+    else if(format==='csv'){
+        var q=function(v){return'"'+String(v==null?'':v).replace(/"/g,'""')+'"'};
+        var lines=[['Помещение','Позиция','Тип','Кол-во','Ед.','Цена за ед., ₽','Сумма, ₽','Где купить'].map(q).join(';')];
+        res.rooms.forEach(function(r){r.furniture.concat(r.materials||[]).forEach(function(it){
+            var qty=it.qty||1;lines.push([r.room_name,it.item,it.type,qty,it.unit||'шт',it.unit_price||it.price,it.price,(it.shops||[]).map(function(s){return s.store+': '+s.url}).join(' | ')].map(q).join(';'));
+        })});
+        lines.push(['Итого','','','','','',res.total,''].map(q).join(';'));
+        c='﻿'+lines.join('\r\n');f+='.csv';m='text/csv'}
+    else{
+        c='Проект интерьера — Black Hole Studio\nСтиль: '+res.style+'\nПлощадь: '+res.total_area+' м²\n'+(res.budget?'Бюджет: '+formatPrice(res.budget)+'\n':'')+'Смета: '+formatPrice(res.total)+'\n';
+        res.rooms.forEach(function(r){
+            var d=r.room_dimensions||{};
+            c+='\n=== '+r.room_name+' ('+d.width+' x '+d.depth+' м, '+r.area+' м²) ===\n';
+            if(r.concept)c+=r.concept+'\n';
+            if(r.palette&&r.palette.length)c+='Палитра: '+r.palette.map(function(p){return p.name+' '+p.hex}).join(', ')+'\n';
+            if(r.lighting)c+='Свет: '+r.lighting+'\n';
+            c+='\nЧто заказать:\n';
+            r.furniture.concat(r.materials||[]).forEach(function(it,i){
+                c+=(i+1)+'. '+it.item+' — '+(it.qty||1)+' '+(it.unit||'шт')+', '+formatPrice(it.price)+'\n';
+                if(it.dimensions)c+='   Размеры: '+it.dimensions+' см\n';
+                if(it.shops&&it.shops.length)c+='   Где купить: '+it.shops[0].store+' — '+it.shops[0].url+'\n';
+            });
+            c+='Итого по помещению: '+formatPrice(r.subtotal)+'\n';
+        });
+        f+='.txt';m='text/plain'}
+    var b=new Blob([c],{type:m+';charset=utf-8'}),u=URL.createObjectURL(b),a=document.createElement('a');
+    a.href=u;a.download=f;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);
+}
+
+function legacyResult(rec){
+    var a=rec.area||16,w=Math.round(Math.sqrt(a*1.25)*10)/10,l=Math.round(a/w*10)/10;
+    var furniture=rec.furniture||[],total=furniture.reduce(function(s,f){return s+(+f.price||0)},0);
+    return{style:rec.style,description:rec.description,time_sec:rec.time_sec,date:rec.date,total:total,total_area:a,budget:null,model:'',
+        rooms:[{room_type:rec.room_type,room_name:rec.room_name,area:a,room_dimensions:{width:w,depth:l,height:rec.height||2.7},furniture:furniture,materials:[],palette:[],concept:'',lighting:'',image_url:null,subtotal:total}]};
+}
+function loadFromHistory(id){
+    fetch('/history?user_id='+currentUserId).then(function(r){return r.json()}).then(function(history){
+        if(!Array.isArray(history))return;
+        var rec=history.find(function(h){return h.id===id});if(!rec)return;
+        var res=rec.result||legacyResult(rec);
+        rooms=res.rooms.map(function(r){var d=r.room_dimensions,t=String(r.room_type).split('+');return{type:ROOM_TYPES[t[0]]?t[0]:'living',zone:t[1]||null,divider:r.divider||null,width:d.width,length:d.depth,wishes:r.wishes||''}});
+        renderRooms();
+        document.getElementById('ceiling-height').value=res.rooms[0].room_dimensions.height||2.7;
+        document.getElementById('room-style').value=res.style;
+        document.getElementById('room-desc').value=res.description||'';
+        document.getElementById('room-budget').value=res.budget||'';
+        document.getElementById('open-plan').checked=!!res.open_plan;
+        displayResult(res,true);
+        document.getElementById('ai-output').scrollIntoView({behavior:'smooth',block:'start'});
+    }).catch(function(e){console.error(e)});
+}
+function renderHistory(history){
+    var list=document.getElementById('history-list');
+    document.getElementById('history-count').textContent=history.length+' '+getPlural(history.length,['запись','записи','записей']);
+    if(history.length===0){list.innerHTML='<div class="history-empty"><p style="font-size:2rem;margin-bottom:0.5rem">📭</p><p>История пуста. Сгенерируйте первый проект!</p></div>';return}
+    var badge=function(h){return isPsycho(h.furniture,h.room_type)?'<span class="chip" style="margin-right:.45rem;font-size:.75rem">🌀 Психодел</span>':''};
+    list.innerHTML=history.map(function(h){
+        var desc=h.description||'';
+        return'<div class="history-item"><div class="history-item-info"><div class="history-item-title">'+badge(h)+roomIcon(h.room_type)+' '+esc(h.room_name)+' • '+esc(h.style)+' • '+esc(h.area)+' м²'+(h.total?' • '+formatPrice(h.total):'')+'</div><div class="history-item-meta">'+(desc?esc(desc.substring(0,60))+(desc.length>60?'...':'')+' • ':'')+h.date+'</div></div><div class="history-item-actions"><button class="btn-secondary" onclick="loadFromHistory('+h.id+')">📂 Открыть</button><button class="btn-icon" onclick="deleteFromHistory('+h.id+')">🗑️</button></div></div>';
+    }).join('');
+}
+
+renderRooms();
+loadUsers();
+</script>
 </body>
 </html>
