@@ -7,6 +7,7 @@
 <script src="/libs/three.min.js"></script>
 <script src="/libs/OrbitControls.js"></script>
 <script src="/static/plan2d.js"></script>
+<script src="/static/plan-editor.js"></script>
 <script src="/static/photo-studio.js"></script>
 <script src="/static/room-photo.js"></script>
 <style>
@@ -252,6 +253,26 @@ footer{text-align:center;padding:2rem;border-top:1px solid rgba(255,255,255,0.05
 .studio-modal .studio-card{max-width:1200px;margin:0 auto}
 .studio-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
 .studio-head h3{color:#00ffff}
+.pe-grid{display:grid;grid-template-columns:3fr 1.2fr;gap:1.5rem}
+.pe-svg{width:100%;height:62vh;background:#0d0d16;border:1px solid rgba(255,255,255,.08);border-radius:10px;touch-action:none;user-select:none}
+.pe-grid line.pe-grid,.pe-svg .pe-grid{stroke:rgba(255,255,255,.06);stroke-width:.02}
+.pe-svg .pe-grid.major{stroke:rgba(255,255,255,.14)}
+.pe-svg rect[data-h=move]{cursor:move}
+.pe-svg .pe-room.sel rect[data-h=move]{stroke:#fff}
+.pe-svg .pe-handle{fill:rgba(0,255,255,.25)}
+.pe-svg .pe-handle.ew{cursor:ew-resize}
+.pe-svg .pe-handle.ns{cursor:ns-resize}
+.pe-svg text{fill:#fff;text-anchor:middle;pointer-events:none;font-family:inherit}
+.pe-svg .pe-name{font-size:.36px;font-weight:700}
+.pe-svg .pe-dims{font-size:.28px;fill:#ccc}
+.pe-list{display:flex;flex-direction:column;gap:.4rem}
+.pe-item{display:flex;align-items:center;gap:.5rem;text-align:left;padding:.55rem .7rem;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#ddd;cursor:pointer}
+.pe-item.active{border-color:#00ffff;color:#fff}
+.pe-dot{width:.7rem;height:.7rem;border-radius:50%}
+.pe-warn{color:#ff6b6b;font-size:.9rem}
+.pe-note{color:#f6c453;font-size:.9rem}
+.plan-note{font-size:.85rem;color:#8fd}
+@media(max-width:900px){.pe-grid{grid-template-columns:1fr}.pe-svg{height:50vh}}
 .studio-close{background:none;border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;width:2.2rem;height:2.2rem;cursor:pointer;font-size:1rem}
 .studio-card{background:rgba(10,10,10,.8);border:1px solid rgba(0,255,255,.3);border-radius:16px;padding:2rem}
 .studio-grid{display:grid;grid-template-columns:3fr 2fr;gap:1.5rem}
@@ -310,7 +331,10 @@ footer{text-align:center;padding:2rem;border-top:1px solid rgba(255,255,255,0.05
 <nav><div class="nav-container"><div class="logo">BLACK HOLE</div><ul class="nav-links"><li><a href="#home">Главная</a></li><li><a href="#about">Как это работает</a></li><li><a href="#ai-design">AI Дизайн</a></li><li><a href="#search">Поиск</a></li><li class="user-selector"><select class="user-select" id="user-select" onchange="switchUser()"></select><button class="btn-add-user" onclick="addUser()">+ Пользователь</button></li></ul></div></nav>
 <section class="hero" id="home"><h1>Мы создаём цифровые вселенные</h1><p>Скинь обмеры квартиры — нейросеть нарисует дизайн и скажет, что и где заказать</p><a href="#ai-design" class="btn-primary">Начать проект</a></section>
 <section id="about"><h2 class="section-title">Как это работает</h2><p class="section-subtitle">От рулетки до корзины в магазине — за пару минут.</p><div class="how-grid"><div class="how-step"><div class="how-num">1</div><h3>📐 Обмеры</h3><p>Укажите помещения: длину, ширину, высоту потолков. Добавьте стиль, бюджет и пожелания.</p></div><div class="how-step"><div class="how-num">2</div><h3>🧠 Нейросеть проектирует</h3><p>LLM придумывает концепцию, палитру и подбирает мебель под размеры, Stable Diffusion рисует визуализацию, а 3D-схема показывает расстановку.</p></div><div class="how-step"><div class="how-num">3</div><h3>🛒 Смета и магазины</h3><p>Список того, что заказать: мебель, напольное покрытие, краска и плинтус с расчётом количества — и ссылки на магазины.</p></div></div></section>
-<section class="ai-section" id="ai-design"><div class="ai-container"><h2 class="section-title">AI Дизайн Интерьера</h2><p class="section-subtitle">Введите обмеры квартиры — нейросеть спроектирует интерьер, покажет 3D-расстановку и составит список покупок со ссылками на магазины</p><div class="ai-demo-wrapper"><div class="ai-form"><label class="templates-label">🏠 Быстрый старт</label><div class="templates-grid"><button type="button" class="template-btn" onclick="applyPreset('studio',this)">🏙️ Студия</button><button type="button" class="template-btn" onclick="applyPreset('one',this)">🚪 1-комн.</button><button type="button" class="template-btn" onclick="applyPreset('zoned',this)">🧩 1-комн. с зонами</button><button type="button" class="template-btn" onclick="applyPreset('two',this)">🏡 2-комн.</button><button type="button" class="template-btn" onclick="applyPreset('three',this)">🏢 3-комн.</button></div><p class="presets-hint">Кухня и санузел в пресетах уже есть — выберите число жилых комнат, остальное можно поменять ниже.</p><label class="templates-label">📐 Обмеры помещений</label><div class="vision-actions"><button type="button" class="btn-secondary" onclick="roomsFromImage('plan')">🗺️ Распознать план квартиры</button><button type="button" class="btn-secondary" onclick="roomsFromImage('photo')">📷 Обмерить комнату по фото</button></div><p class="vision-status" id="vision-status" hidden></p><div class="rooms-editor" id="rooms-editor"></div><div class="rooms-toolbar"><button type="button" class="btn-secondary" onclick="addRoom()">+ Добавить помещение</button><label class="ceiling-field">Высота потолков, м <input type="number" id="ceiling-height" value="2.7" step="0.05" min="2" max="5"></label><label class="open-plan"><input type="checkbox" id="open-plan"> Студия — общее пространство без стен между зонами</label><span class="rooms-summary" id="rooms-summary"></span></div><div class="form-row"><div class="form-group"><label>Стиль интерьера</label><select id="room-style"><option value="Скандинавский">Скандинавский</option><option value="Лофт">Лофт</option><option value="Минимализм">Минимализм</option><option value="Неоклассика">Неоклассика</option><option value="Современный">Современный</option><option value="Japandi">Japandi</option></select></div><div class="form-group"><label>Бюджет, ₽ (необязательно)</label><input type="number" id="room-budget" placeholder="500000" min="0" step="10000"></div></div><div class="form-group"><label>Общие пожелания ко всей квартире</label><textarea id="room-desc" rows="2" placeholder="Светлые тона, много дерева, есть кот..."></textarea></div><button class="btn-primary" id="generate-btn" style="width:100%" onclick="generateAI()">Сгенерировать дизайн</button></div><div class="ai-output" id="ai-output"><div class="ai-output-placeholder"><p style="font-size:3rem;margin-bottom:1rem">🌌</p><p>Здесь появится проект: визуализация, 3D-схема и смета</p></div></div></div><div class="history-section"><div class="history-header"><h3 class="history-title">📜 История генераций</h3><div style="display:flex;gap:0.8rem;align-items:center"><span class="history-count" id="history-count">0 записей</span><button class="btn-danger" onclick="clearHistory()">🗑️ Очистить всё</button></div></div><div class="history-list" id="history-list"><div class="history-empty"><p style="font-size:2rem;margin-bottom:0.5rem">📭</p><p>История пуста. Сгенерируйте первый дизайн!</p></div></div></div></div></section>
+<section class="ai-section" id="ai-design"><div class="ai-container"><h2 class="section-title">AI Дизайн Интерьера</h2><p class="section-subtitle">Введите обмеры квартиры — нейросеть спроектирует интерьер, покажет 3D-расстановку и составит список покупок со ссылками на магазины</p><div class="ai-demo-wrapper"><div class="ai-form"><label class="templates-label">🏠 Быстрый старт</label><div class="templates-grid"><button type="button" class="template-btn" onclick="applyPreset('studio',this)">🏙️ Студия</button><button type="button" class="template-btn" onclick="applyPreset('one',this)">🚪 1-комн.</button><button type="button" class="template-btn" onclick="applyPreset('zoned',this)">🧩 1-комн. с зонами</button><button type="button" class="template-btn" onclick="applyPreset('two',this)">🏡 2-комн.</button><button type="button" class="template-btn" onclick="applyPreset('three',this)">🏢 3-комн.</button></div><p class="presets-hint">Кухня и санузел в пресетах уже есть — выберите число жилых комнат, остальное можно поменять ниже.</p><label class="templates-label">📐 Обмеры помещений</label><div class="vision-actions"><button type="button" class="btn-secondary" onclick="planEditorOpen()">✏️ Редактор планировки</button><button type="button" class="btn-secondary" onclick="roomsFromImage('plan')">🗺️ Распознать план квартиры</button><button type="button" class="btn-secondary" onclick="roomsFromImage('photo')">📷 Обмерить комнату по фото</button></div><p class="vision-status" id="vision-status" hidden></p><div class="rooms-editor" id="rooms-editor"></div><div class="rooms-toolbar"><button type="button" class="btn-secondary" onclick="addRoom()">+ Добавить помещение</button><label class="ceiling-field">Высота потолков, м <input type="number" id="ceiling-height" value="2.7" step="0.05" min="2" max="5"></label><label class="open-plan"><input type="checkbox" id="open-plan"> Студия — общее пространство без стен между зонами</label><span class="rooms-summary" id="rooms-summary"></span><span class="plan-note" id="plan-note" hidden>🗺️ Планировка из редактора · <a href="#" onclick="clearPlan();renderRooms();return false">сбросить</a></span></div><div class="form-row"><div class="form-group"><label>Стиль интерьера</label><select id="room-style"><option value="Скандинавский">Скандинавский</option><option value="Лофт">Лофт</option><option value="Минимализм">Минимализм</option><option value="Неоклассика">Неоклассика</option><option value="Современный">Современный</option><option value="Japandi">Japandi</option></select></div><div class="form-group"><label>Бюджет, ₽ (необязательно)</label><input type="number" id="room-budget" placeholder="500000" min="0" step="10000"></div></div><div class="form-group"><label>Общие пожелания ко всей квартире</label><textarea id="room-desc" rows="2" placeholder="Светлые тона, много дерева, есть кот..."></textarea></div><button class="btn-primary" id="generate-btn" style="width:100%" onclick="generateAI()">Сгенерировать дизайн</button></div><div class="ai-output" id="ai-output"><div class="ai-output-placeholder"><p style="font-size:3rem;margin-bottom:1rem">🌌</p><p>Здесь появится проект: визуализация, 3D-схема и смета</p></div></div></div><div class="history-section"><div class="history-header"><h3 class="history-title">📜 История генераций</h3><div style="display:flex;gap:0.8rem;align-items:center"><span class="history-count" id="history-count">0 записей</span><button class="btn-danger" onclick="clearHistory()">🗑️ Очистить всё</button></div></div><div class="history-list" id="history-list"><div class="history-empty"><p style="font-size:2rem;margin-bottom:0.5rem">📭</p><p>История пуста. Сгенерируйте первый дизайн!</p></div></div></div></div></section>
+<div class="studio-modal" id="plan-editor" hidden><div class="studio-card"><div class="studio-head"><h3>✏️ Редактор планировки</h3><button type="button" class="studio-close" onclick="planEditorClose()" aria-label="Закрыть">✕</button></div>
+<div class="pe-grid"><div><svg id="pe-svg" class="pe-svg" xmlns="http://www.w3.org/2000/svg"></svg><p class="order-note">Перетаскивайте комнаты мышью, тяните за стены выбранной комнаты, чтобы изменить размер. Стены примагничиваются к соседним комнатам. Сетка — 0.5 м.</p></div>
+<div class="studio-side" id="pe-side"></div></div></div></div>
 <div class="studio-modal" id="studio" hidden><div class="studio-card"><div class="studio-head"><h3 id="studio-title">✏️ Правка фото</h3><button type="button" class="studio-close" onclick="studioClose()" aria-label="Закрыть">✕</button></div>
 <div id="studio-work"><div class="studio-grid"><div>
 <div class="studio-stage" id="studio-stage"><img id="studio-img" alt="Фото комнаты" draggable="false"><div class="studio-sel" id="studio-sel" hidden></div></div>
@@ -1007,6 +1031,7 @@ function renderRooms(){
             +'<div class="room-wish"><input type="text" maxlength="500" placeholder="Пожелания к этой комнате: например, рабочее место у окна, 4 стула" value="'+esc(r.wishes||'')+'" oninput="updateRoom('+i+',\'wishes\',this.value)"></div></div>';
     }).join('');
     updateRoomsSummary();
+    document.getElementById('plan-note').hidden=!hasPlan(rooms);
 }
 function updateRoomsSummary(){
     var total=rooms.reduce(function(s,r){return s+roomArea(r)},0);
@@ -1016,12 +1041,13 @@ function updateRoom(i,f,v){
     rooms[i][f]=(f==='type'||f==='wishes'||f==='zone'||f==='divider')?(v||null):parseFloat(v);
     if(f==='type'&&(!ZONES[v]||rooms[i].zone===v))rooms[i].zone=null;
     if(f==='type'||f==='zone'){renderRooms();return}
+    if((f==='width'||f==='length')&&hasPlan(rooms)){clearPlan();document.getElementById('plan-note').hidden=true}
     var a=document.getElementById('room-area-'+i);if(a)a.textContent=fmtArea(rooms[i]);
     updateRoomsSummary();
     document.querySelectorAll('.template-btn').forEach(function(b){b.classList.remove('active')});
 }
-function addRoom(){if(rooms.length>=6){alert('Максимум 6 помещений за раз');return}rooms.push({type:'bedroom',width:3.5,length:3.2});renderRooms()}
-function removeRoom(i){if(rooms.length<2)return;rooms.splice(i,1);renderRooms()}
+function addRoom(){if(rooms.length>=6){alert('Максимум 6 помещений за раз');return}clearPlan();rooms.push({type:'bedroom',width:3.5,length:3.2});renderRooms()}
+function removeRoom(i){if(rooms.length<2)return;clearPlan();rooms.splice(i,1);renderRooms()}
 function applyPreset(name,btn){
     var p=PRESETS[name];if(!p)return;
     rooms=p.map(function(r){return{type:r.type,width:r.width,length:r.length,zone:r.zone||null,divider:r.divider||null}});
@@ -1074,7 +1100,7 @@ function generateAI(){
     var output=document.getElementById('ai-output');
     var payload={
         user_id:currentUserId,
-        rooms:rooms.map(function(r){return{type:r.type,zone:r.zone||null,divider:r.divider||'стеллаж',width:r.width,length:r.length,height:ceilingHeight(),wishes:(r.wishes||'').trim()}}),
+        rooms:rooms.map(function(r){return{type:r.type,zone:r.zone||null,divider:r.divider||'стеллаж',width:r.width,length:r.length,height:ceilingHeight(),wishes:(r.wishes||'').trim(),x:hasPlan(rooms)?r.x:null,y:hasPlan(rooms)?r.y:null}}),
         style:document.getElementById('room-style').value,
         budget:parseInt(document.getElementById('room-budget').value,10)||null,
         description:document.getElementById('room-desc').value.trim(),
@@ -1230,7 +1256,7 @@ function loadFromHistory(id){
         if(!Array.isArray(history))return;
         var rec=history.find(function(h){return h.id===id});if(!rec)return;
         var res=rec.result||legacyResult(rec);
-        rooms=res.rooms.map(function(r){var d=r.room_dimensions,t=String(r.room_type).split('+');return{type:ROOM_TYPES[t[0]]?t[0]:'living',zone:t[1]||null,divider:r.divider||null,width:d.width,length:d.depth,wishes:r.wishes||''}});
+        rooms=res.rooms.map(function(r){var d=r.room_dimensions,t=String(r.room_type).split('+');return{type:ROOM_TYPES[t[0]]?t[0]:'living',zone:t[1]||null,divider:r.divider||null,width:d.width,length:d.depth,wishes:r.wishes||'',x:r.plan?r.plan.x:undefined,y:r.plan?r.plan.y:undefined}});
         renderRooms();
         document.getElementById('ceiling-height').value=res.rooms[0].room_dimensions.height||2.7;
         document.getElementById('room-style').value=res.style;

@@ -28,6 +28,8 @@ class RoomSpec(BaseModel):
     length: float = Field(ge=1.2, le=15)
     height: float = Field(default=2.7, ge=2.0, le=5.0)
     wishes: str = Field(default="", max_length=500)
+    x: Optional[float] = Field(default=None, ge=0, le=60)
+    y: Optional[float] = Field(default=None, ge=0, le=60)
 
 class DesignRequest(BaseModel):
     user_id: int

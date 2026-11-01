@@ -7,6 +7,19 @@ var WALL_T=0.12,DOOR_W=0.9;
 function overlap(a0,a1,b0,b1){return Math.min(a1,b1)-Math.max(a0,b0)}
 
 function planPackRooms(rooms){
+    var spots=rooms.length&&rooms.every(function(r){return r.plan})?rooms.map(function(r){
+        return{x:r.plan.x,y:r.plan.y,w:r.room_dimensions.width,d:r.room_dimensions.depth};
+    }):packRows(rooms);
+    spots.forEach(function(s){
+        function neighbour(edge,otherEdge){
+            return spots.some(function(o){return o!==s&&overlap(s.x,s.x+s.w,o.x,o.x+o.w)>0.05&&Math.abs(otherEdge(o)-edge)<0.01});
+        }
+        var topShared=neighbour(s.y,function(o){return o.y+o.d}),bottomShared=neighbour(s.y+s.d,function(o){return o.y});
+        s.rot=topShared&&!bottomShared?180:0;
+    });
+    return spots;
+}
+function packRows(rooms){
     var total=rooms.reduce(function(s,r){return s+r.room_dimensions.width*r.room_dimensions.depth},0);
     var widest=Math.max.apply(null,rooms.map(function(r){return r.room_dimensions.width}));
     var rowMax=Math.max(widest,Math.sqrt(total)*1.6);
@@ -18,13 +31,6 @@ function planPackRooms(rooms){
         if(x>0&&x+d.width>rowMax+0.01){x=0;y+=rowH;rowH=0}
         spots[i]={x:x,y:y,w:d.width,d:d.depth};
         x+=d.width;rowH=Math.max(rowH,d.depth);
-    });
-    spots.forEach(function(s){
-        function neighbour(edge,otherEdge){
-            return spots.some(function(o){return o!==s&&overlap(s.x,s.x+s.w,o.x,o.x+o.w)>0.05&&Math.abs(otherEdge(o)-edge)<0.01});
-        }
-        var topShared=neighbour(s.y,function(o){return o.y+o.d}),bottomShared=neighbour(s.y+s.d,function(o){return o.y});
-        s.rot=topShared&&!bottomShared?180:0;
     });
     return spots;
 }

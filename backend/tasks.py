@@ -527,6 +527,7 @@ def generate_design_task(self, user_id, rooms, style, description, budget=None, 
         data.update({
             "room_type": room_key(room),
             "divider": room.get("divider"),
+            "plan": {"x": spec["x"], "y": spec["y"]} if spec.get("x") is not None and spec.get("y") is not None else None,
             "room_name": name,
             "room_dimensions": {"width": room["width"], "depth": room["length"], "height": room["height"]},
             "area": room["area"],
