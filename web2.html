@@ -366,7 +366,7 @@ function normalizeDims(item){
     else if(kind==='ванна'){if(/душ/.test(name)){w=0.9;d=0.9;h=2.0}else{w=Math.min(Math.max(Math.max.apply(null,nums.concat([1.5])),1.5),1.8);d=0.75;h=0.6}}
     else if(kind==='унитаз'){w=0.4;h=0.8;d=0.65}
     else if(kind==='раковина'){w=Math.min(Math.max(w,0.5),0.8);h=0.85;d=0.45}
-    else if(kind==='стиралка'){w=0.6;h=0.85;d=0.6}
+    else if(kind==='стиралка'){w=0.6;h=0.85;d=0.45}
     else if(type.indexOf('стул')!==-1||type.indexOf('кресл')!==-1){w=Math.min(w,0.5);d=Math.min(d,0.5)}
     else if(type.indexOf('статуя')!==-1||name.indexOf('коня')!==-1){h=Math.max(h,1.0);rot=Math.PI}
     return{w:w,h:h,d:d,rot:rot};
@@ -409,14 +409,21 @@ function createFurnitureModel(item,dims,psycho){
         var seat=box(new THREE.TorusGeometry(w*0.4,0.035,10,28),porc,0,seatY,bowlZ);seat.rotation.x=Math.PI/2;seat.scale.y=bowlL/w;
         var lid=box(new THREE.BoxGeometry(w*0.85,0.42,0.02),porc,0,seatY+0.22,-d/2+0.22);lid.rotation.x=-0.12;
     }else if(kindOf(item)==='раковина'){
-        box(new THREE.BoxGeometry(w,0.5,d),woodMat,0,0.55,0);
-        box(new THREE.BoxGeometry(w-0.04,0.004,0.01),metalMat,0,0.55,d/2+0.005);
+        box(new THREE.BoxGeometry(w-0.06,0.08,d-0.06),darkWoodMat,0,0.04,-0.03);
+        box(new THREE.BoxGeometry(w,0.72,d),woodMat,0,0.44,0);
+        box(new THREE.BoxGeometry(w-0.04,0.004,0.01),metalMat,0,0.5,d/2+0.005);
         box(new THREE.BoxGeometry(w,0.06,d),whiteMat,0,0.83,0);
         box(new THREE.BoxGeometry(w*0.6,0.02,d*0.55),new THREE.MeshStandardMaterial({color:0xbfd8e6,roughness:0.2}),0,0.855,0.02);
         box(new THREE.CylinderGeometry(0.015,0.015,0.2,8),metalMat,0,0.95,-d/2+0.06);
         box(new THREE.BoxGeometry(0.02,0.02,0.12),metalMat,0,1.04,-d/2+0.11);
         box(new THREE.BoxGeometry(w*0.9,0.7,0.03),woodMat,0,1.45,-d/2+0.015);
         box(new THREE.BoxGeometry(w*0.84,0.64,0.01),new THREE.MeshStandardMaterial({color:0xd4e3ec,roughness:0.05,metalness:0.2,emissive:0x52606a,emissiveIntensity:0.35}),0,1.45,-d/2+0.035);
+    }else if(kindOf(item)==='стиралка'){
+        box(new THREE.BoxGeometry(w,h,d),whiteMat,0,h/2,0);
+        var door=box(new THREE.CylinderGeometry(0.19,0.19,0.03,24),new THREE.MeshStandardMaterial({color:0x2b2f36,roughness:0.2}),0,h*0.5,d/2+0.01);door.rotation.x=Math.PI/2;
+        var ring=box(new THREE.TorusGeometry(0.2,0.025,10,32),metalMat,0,h*0.5,d/2+0.02);
+        box(new THREE.BoxGeometry(w-0.04,0.1,0.01),new THREE.MeshStandardMaterial({color:0xd9dde2,roughness:0.4}),0,h-0.07,d/2+0.005);
+        box(new THREE.CylinderGeometry(0.03,0.03,0.02,16),metalMat,w*0.3,h-0.07,d/2+0.015).rotation.x=Math.PI/2;
     }else if(type.indexOf('кровать')!==-1||name.indexOf('кровать')!==-1){
         var base=new THREE.Mesh(new THREE.BoxGeometry(w,0.3,d),darkWoodMat);base.position.y=0.15;base.castShadow=true;group.add(base);
         var matt=new THREE.Mesh(new THREE.BoxGeometry(w-0.05,0.2,d-0.05),whiteMat);matt.position.y=0.4;matt.castShadow=true;group.add(matt);
@@ -478,9 +485,6 @@ function createFurnitureModel(item,dims,psycho){
         for(var gi=0;gi<cn;gi++){var df=new THREE.Mesh(new THREE.BoxGeometry(w/cn-0.03,h*0.4,0.03),new THREE.MeshStandardMaterial({color:0x6B4E3D,roughness:0.6}));df.position.set(-w/2+w/cn*(gi+0.5),h*0.21,d/2+0.02);group.add(df);}
     }else if(type.indexOf('столешниц')!==-1||name.indexOf('столешниц')!==-1){
         var tp=new THREE.Mesh(new THREE.BoxGeometry(w,0.04,d),woodMat);tp.position.y=0.9;tp.castShadow=true;group.add(tp);
-    }else if(kindOf(item)==='стиралка'){
-        box(new THREE.BoxGeometry(w,h,d),whiteMat,0,h/2,0);
-        var door=box(new THREE.CylinderGeometry(0.19,0.19,0.03,24),new THREE.MeshStandardMaterial({color:0x2b2f36,roughness:0.2}),0,h*0.5,d/2+0.01);door.rotation.x=Math.PI/2;
     }else if(kindOf(item)==='ковёр'){
         var rugM=new THREE.Mesh(new THREE.BoxGeometry(w,0.012,d),new THREE.MeshStandardMaterial({color:0x8b6b61,roughness:1}));rugM.position.y=0.006;rugM.receiveShadow=true;group.add(rugM);
     }else if(type.indexOf('статуя')!==-1||name.indexOf('коня')!==-1){
@@ -526,11 +530,12 @@ function psychoPlace(item,roomDims){
     return{x:roomDims.width/2,z:roomDims.depth/2,w:dims.w,h:dims.h,d:dims.d,rot:0};
 }
 
-var PERM={living:['диван','шкаф','тв'],bedroom:['кровать','шкаф'],kitchen:['гарнитур','холодос','стол'],office:['шкаф','стол','стул'],bathroom:['ванна','унитаз','раковина']};
+var PERM={living:['диван','шкаф','тв'],bedroom:['кровать','шкаф'],kitchen:['гарнитур','холодос','стол'],office:['шкаф','стол','стул'],bathroom:['ванна','унитаз','раковина','стиралка']};
 var DEF={
  ванна:{item:'Ванна акриловая',type:'ванна',description:'Акриловая ванна',materials:'акрил',dimensions:'170x60x75',price:25000},
  унитаз:{item:'Унитаз подвесной',type:'унитаз',description:'Подвесной унитаз',materials:'фарфор',dimensions:'40x80x55',price:22000},
- раковина:{item:'Раковина с тумбой',type:'раковина',description:'Тумба с раковиной',materials:'керамика, МДФ',dimensions:'60x85x45',price:15000},
+ раковина:{item:'Раковина с тумбой и зеркалом',type:'раковина',description:'Тумба с раковиной и зеркалом',materials:'керамика, МДФ',dimensions:'60x85x45',price:15000},
+ стиралка:{item:'Стиральная машина узкая',type:'стиралка',description:'Узкая стиральная машина 6 кг',materials:'металл, пластик',dimensions:'60x85x45',price:32000},
  диван:{item:'Диван',type:'диван',description:'Мягкий диван для гостиной',materials:'ткань, дерево',dimensions:'220x85x95',price:35000},
  шкаф:{item:'Шкаф',type:'шкаф',description:'Вместительный шкаф для вещей',materials:'МДФ, шпон',dimensions:'100x200x60',price:28000},
  тв:{item:'Телевизор',type:'телевизор',description:'ТВ для просмотра фильмов',materials:'панель, металл',dimensions:'125x75x8',price:45000},
@@ -637,7 +642,7 @@ var SLOT_ROT={
     bedroom:{'шкаф':Math.PI/2,'кровать':Math.PI},
     kitchen:{'гарнитур':Math.PI/2,'холодос':-Math.PI/2,'стол':0},
     office:{'шкаф':Math.PI/2,'стол':0,'стул':Math.PI},
-    bathroom:{'ванна':0,'унитаз':-Math.PI/2,'раковина':Math.PI/2},
+    bathroom:{'ванна':0,'унитаз':-Math.PI/2,'раковина':Math.PI/2,'стиралка':0},
     living:{'диван':0,'шкаф':Math.PI/2,'стеллаж':Math.PI/2,'тв':Math.PI}
 };
 function quarter(r){return Math.abs(Math.abs(r||0)-Math.PI/2)<0.01}
@@ -709,7 +714,11 @@ function computeLayout(furniture,roomDims,roomType,opts){
         }else if(roomType==='bathroom'){
             if(kind==='ванна'){x=w/2+hug;z=d/2+hug;}
             else if(kind==='унитаз'){x=W-w/2-hug;z=D-d/2-0.35;}
-            else{x=w/2+hug;z=D-d/2-0.3;}
+            else if(kind==='стиралка'){x=W-w/2-hug;z=d/2+hug;}
+            else{
+                var tub=items.filter(function(li){return kindOf(li.item)==='ванна'})[0];
+                x=w/2+hug;z=Math.max(D-d/2-0.3,tub?tub.pos.z+tub.pos.d/2+0.05+d/2:0);
+            }
         }else if(roomType==='office'){
             if(kind==='шкаф'){x=w/2+wall;z=D/2;}
             else if(kind==='стол'){x=W/2+0.5;z=D/2;}
@@ -735,12 +744,13 @@ function computeLayout(furniture,roomDims,roomType,opts){
         }
         return null;
     }
+    var washerW=roomType==='bathroom'&&list.some(function(it){return kindOf(it)==='стиралка'})?0.62:0;
     var rugs=list.filter(function(it){return kindOf(it)==='ковёр'});
     list=list.filter(function(it){return kindOf(it)!=='ковёр'}).concat(rugs);
     list.forEach(function(item){
         var dims=normalizeDims(item),kind=kindOf(item);
         if(kind==='гарнитур')dims.w=Math.min(dims.w,D-0.3);
-        if(kind==='ванна')dims.w=Math.min(dims.w,W-0.1);
+        if(kind==='ванна')dims.w=Math.min(dims.w,W-0.1>=washerW+1.2?W-0.1-washerW:W-0.1);
         if(kind==='ковёр'){
             dims.w=Math.min(Math.max(dims.w,1.2),W*0.7);dims.d=Math.min(Math.max(dims.d,0.8),D*0.7);dims.rot=0;
             items.push({item:item,dims:dims,pos:{x:W/2,z:D/2,w:dims.w,d:dims.d,rot:0},shift:0});
@@ -963,7 +973,7 @@ var ZONES={living:'+ гостиная',bedroom:'+ спальня',office:'+ ра
 var DIVIDER_NAMES={'шкаф':'шкаф','стеллаж':'стеллаж','полка':'книжная полка'};
 function roomIcon(type){return ROOM_ICONS[String(type||'').split('+')[0]]||'🏠'}
 var rooms=[{type:'living',width:5,length:4}];
-var BATH={type:'bathroom',width:2.1,length:1.7};
+var BATH={type:'bathroom',width:2.3,length:1.7};
 var PRESETS={
  studio:[{type:'living',width:5.2,length:4.2},{type:'kitchen',width:3,length:2.6},BATH],
  one:[{type:'living',width:4.4,length:4},{type:'kitchen',width:3.2,length:3},BATH],

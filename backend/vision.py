@@ -13,7 +13,7 @@ TEXT_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
 VISION_TIMEOUT = httpx.Timeout(300.0, connect=5.0)
 
 SUPPORTED_TYPES = {"living", "bedroom", "kitchen", "office", "bathroom"}
-TYPICAL_SIZE = {"living": (5.0, 4.0), "bedroom": (4.0, 3.5), "kitchen": (3.5, 3.0), "office": (3.5, 3.0), "bathroom": (2.1, 1.7)}
+TYPICAL_SIZE = {"living": (5.0, 4.0), "bedroom": (4.0, 3.5), "kitchen": (3.5, 3.0), "office": (3.5, 3.0), "bathroom": (2.3, 1.7)}
 TYPE_WORDS = {
     "living": ("гостин", "зал", "living", "общая"),
     "bedroom": ("спальн", "bedroom", "детск", "жилая"),

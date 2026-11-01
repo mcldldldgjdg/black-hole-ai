@@ -34,6 +34,7 @@ DEFAULTS = {
     "ванна": {"item": "Ванна акриловая 170 см", "type": "ванна", "description": "Акриловая ванна с экраном", "materials": "акрил", "dimensions": "170x60x75", "price": 25000},
     "унитаз": {"item": "Унитаз подвесной с инсталляцией", "type": "унитаз", "description": "Подвесной унитаз с инсталляцией и кнопкой", "materials": "фарфор, сталь", "dimensions": "40x80x55", "price": 22000},
     "раковина": {"item": "Раковина с тумбой и зеркалом 60 см", "type": "раковина", "description": "Подвесная тумба с раковиной, смесителем и зеркалом", "materials": "керамика, МДФ", "dimensions": "60x85x45", "price": 15000},
+    "стиралка": {"item": "Стиральная машина узкая 6 кг", "type": "стиралка", "description": "Узкая стиральная машина с фронтальной загрузкой", "materials": "металл, пластик", "dimensions": "60x85x45", "price": 32000},
 }
 PLUMBING = {"ванна", "унитаз", "раковина"}
 FOREIGN = {
@@ -67,6 +68,7 @@ def kind_of(it):
     if "шкаф" in t or "шкаф" in n: return "шкаф"
     if "телевизор" in t or "тв" in t or "телевиз" in n: return "тв"
     text = f"{t} {n}"
+    if "стиральн" in text or "стиралк" in text: return "стиралка"
     if "ванн" in text or "душ" in text: return "ванна"
     if "унитаз" in text or "инсталляц" in text: return "унитаз"
     if "раковин" in text or "умывальник" in text: return "раковина"
@@ -128,7 +130,7 @@ WISH_ITEMS = [
     (r"мультиварк", ("мультиварк",), {"item": "Мультиварка", "type": "техника", "description": "Мультиварка 5 л", "materials": "пластик, металл", "dimensions": "35x30x35", "price": 7000}),
     (r"микроволн|свч", ("микроволн", "свч"), {"item": "Микроволновая печь", "type": "техника", "description": "Микроволновая печь 20 л", "materials": "металл", "dimensions": "45x26x35", "price": 9000}),
     (r"посудомо", ("посудомо",), {"item": "Посудомоечная машина", "type": "техника", "description": "Встраиваемая посудомойка 45 см", "materials": "металл", "dimensions": "45x82x55", "price": 35000}),
-    (r"стиральн", ("стиральн",), {"item": "Стиральная машина", "type": "техника", "description": "Стиральная машина 6 кг", "materials": "металл, пластик", "dimensions": "60x85x45", "price": 32000}),
+    (r"стиральн", ("стиральн",), {"item": "Стиральная машина", "type": "стиралка", "description": "Стиральная машина 6 кг", "materials": "металл, пластик", "dimensions": "60x85x45", "price": 32000}),
     (r"кресл", ("кресл",), {"item": "Кресло", "type": "кресло", "description": "Мягкое кресло", "materials": "ткань, дерево", "dimensions": "75x90x80", "price": 15000}),
     (r"шкаф", ("шкаф",), DEFAULTS["шкаф"]),
     (r"\bстол\b|стола\b", ("стол",), DEFAULTS["стол"]),
@@ -236,7 +238,8 @@ KIND_WORDS = {
     "стол": ("стол",), "стул": ("стул",), "тв": ("телевиз", "тв"), "диван": ("диван",), "кровать": ("кроват",),
     "тумба": ("тумб",), "кресло": ("кресл",), "стеллаж": ("стеллаж", "полк"), "лампа": ("ламп", "торшер", "светил"),
     "ковёр": ("ковёр", "ковер", "коврик"), "шкаф": ("шкаф",), "холодос": ("холодил",), "гарнитур": ("гарнит",),
-    "техника": ("мультиварк", "микроволн", "чайник", "посудомо", "стиральн", "духов"),
+    "техника": ("мультиварк", "микроволн", "чайник", "посудомо", "духов"),
+    "стиралка": ("стиральн", "стиралк"),
 }
 MAX_EXTRAS = 3
 
@@ -250,7 +253,7 @@ def keep_relevant(items, room_type, wishes, workplace):
     kept, extras, plumbing = [], 0, set()
     for it in items:
         kind = kind_of(it)
-        if kind in PLUMBING:
+        if kind in PLUMBING or kind == "стиралка":
             if kind in plumbing:
                 continue
             plumbing.add(kind)
@@ -297,6 +300,12 @@ def normalize_furniture(raw, room_type, workplace=False, wishes=None, divider=No
         }
         if kind_of(item) in foreign:
             continue
+        fixture = kind_of({"item": item["item"]})
+        if fixture in PLUMBING or fixture == "стиралка":
+            if len(item["item"].split()) == 1:
+                item.update({k: DEFAULTS[fixture][k] for k in ("item", "description", "dimensions", "price")})
+                item["search_query"] = item["item"]
+            item["type"] = fixture
         key = item["item"].lower()
         if key in by_name:
             by_name[key]["qty"] = min(by_name[key]["qty"] + item["qty"], 12)
