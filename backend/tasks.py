@@ -242,6 +242,7 @@ KIND_WORDS = {
     "стиралка": ("стиральн", "стиралк"),
 }
 MAX_EXTRAS = 3
+SINGLE = {"кровать", "диван", "гарнитур", "холодос", "тв", "шкаф", "стиралка"} | PLUMBING
 
 
 def keep_relevant(items, room_type, wishes, workplace):
@@ -250,13 +251,13 @@ def keep_relevant(items, room_type, wishes, workplace):
     allowed = set()
     for t in room_type.split("+"):
         allowed |= EXTRA_OK.get(t, EXTRA_OK["living"])
-    kept, extras, plumbing = [], 0, set()
+    kept, extras, single = [], 0, set()
     for it in items:
         kind = kind_of(it)
-        if kind in PLUMBING or kind == "стиралка":
-            if kind in plumbing:
+        if kind in SINGLE and not it.get("divider"):
+            if kind in single:
                 continue
-            plumbing.add(kind)
+            single.add(kind)
         wished = bool(low) and any(w in low for w in KIND_WORDS.get(kind, ()))
         if kind in required or wished or it.get("workplace") or it.get("divider") or (workplace and kind == "стул"):
             kept.append(it)

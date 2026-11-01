@@ -79,6 +79,7 @@ section{padding:6rem 5%;max-width:1400px;margin:0 auto}
 .room-3d-controls{color:#888;font-size:0.8rem}
 .furniture-tooltip{position:fixed;background:rgba(10,10,20,0.98);border:1px solid #00ffff;border-radius:10px;padding:1rem;min-width:280px;pointer-events:auto;opacity:0;transition:opacity 0.3s;z-index:1000;box-shadow:0 8px 32px rgba(0,255,255,0.3)}
 .furniture-tooltip.visible{opacity:1}
+.furniture-tooltip:not(.pinned){pointer-events:none}
 .furniture-tooltip.pinned{border-color:#ffa500;box-shadow:0 8px 32px rgba(255,165,0,0.3)}
 .tooltip-header{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;padding-bottom:0.5rem;border-bottom:1px solid rgba(138,43,226,0.3)}
 .tooltip-icon{font-size:1.5rem}
@@ -915,6 +916,9 @@ function init3DRoom(container,furniture,roomDims,roomType,look){
             if(hoveredGroup)highlight(hoveredGroup,false);
             hoveredGroup=found;highlight(found,true);
             renderer.domElement.style.cursor='pointer';showTooltip3D(event,found.userData.furniture,false);
+        }else if(found){
+            var tip=document.getElementById('active-tooltip');
+            if(tip){tip.style.left=(event.clientX+20)+'px';tip.style.top=(event.clientY+20)+'px'}
         }else if(!found&&hoveredGroup){
             highlight(hoveredGroup,false);
             hoveredGroup=null;renderer.domElement.style.cursor='grab';hideTooltip3D();
