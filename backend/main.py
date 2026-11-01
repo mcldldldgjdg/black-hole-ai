@@ -61,14 +61,6 @@ class InpaintRequest(BaseModel):
     box: Optional[Box] = None
     mask: Optional[str] = Field(default=None, max_length=IMAGE_MAX)
 
-class RestyleRequest(BaseModel):
-    image: str = Field(max_length=IMAGE_MAX)
-    style: str = Field(default="Современный", max_length=40)
-    prompt: str = Field(default="", max_length=300)
-    room_type: ROOM_TYPE = "living"
-    strength: float = Field(default=0.75, ge=0.3, le=0.95)
-    mode: Literal["restyle", "furnish"] = "restyle"
-
 class CameraInfo(BaseModel):
     x: float = Field(ge=-20, le=40)
     z: float = Field(ge=-20, le=40)
@@ -76,6 +68,11 @@ class CameraInfo(BaseModel):
     tz: float = Field(ge=-20, le=40)
     hfov: float = Field(gt=0, lt=180)
     side: Optional[Literal["front", "back", "left", "right"]] = None
+
+class SaveRoomPhoto(BaseModel):
+    image: str = Field(max_length=IMAGE_MAX, pattern=r"^data:image/(png|jpeg|webp);base64,")
+    task_id: Optional[str] = Field(default=None, max_length=64)
+    room_index: int = Field(ge=0, le=20)
 
 class RenderRequest(BaseModel):
     image: str = Field(max_length=IMAGE_MAX)
@@ -287,13 +284,19 @@ async def photo_inpaint(req: InpaintRequest):
         prompt = (await run_model(vision.translate([prompt])))[0]
     return {"image": await run_model(photo.inpaint(req.image, prompt, req.style, box, req.mask))}
 
-@app.post("/photo/restyle")
-async def photo_restyle(req: RestyleRequest):
-    room = photo.ROOM_NAMES_EN.get(req.room_type, "room")
-    prompt = req.prompt
-    if vision.CYRILLIC.search(prompt):
-        prompt = (await run_model(vision.translate([prompt])))[0]
-    return {"image": await run_model(photo.restyle(req.image, req.style, prompt, room, req.strength, req.mode))}
+@app.post("/photo/save-room")
+async def save_room_photo(req: SaveRoomPhoto, db: Session = Depends(get_db)):
+    gen = db.query(Generation).filter(Generation.task_id == req.task_id).first() if req.task_id else None
+    if not gen or not gen.result_json:
+        raise HTTPException(404, "Проект не найден")
+    result = json.loads(gen.result_json)
+    if req.room_index >= len(result["rooms"]):
+        raise HTTPException(404, "Комната не найдена")
+    result["rooms"][req.room_index]["image_url"] = req.image
+    result["rooms"][req.room_index]["edited"] = True
+    gen.result_json = json.dumps(result, ensure_ascii=False)
+    db.commit()
+    return {"ok": True}
 
 @app.post("/render-room")
 async def render_room(req: RenderRequest, db: Session = Depends(get_db)):
@@ -308,6 +311,7 @@ async def render_room(req: RenderRequest, db: Session = Depends(get_db)):
             if req.room_index < len(result["rooms"]):
                 result["rooms"][req.room_index]["image_url"] = image
                 result["rooms"][req.room_index]["image_source"] = "3d"
+                result["rooms"][req.room_index]["edited"] = False
                 result["rooms"][req.room_index]["photo_camera"] = req.camera.model_dump() if req.camera else None
                 result["rooms"][req.room_index]["photo_version"] = req.version
                 if req.wall_color:

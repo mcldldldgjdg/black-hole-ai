@@ -14,6 +14,7 @@ VISION_TIMEOUT = httpx.Timeout(300.0, connect=5.0)
 
 SUPPORTED_TYPES = {"living", "bedroom", "kitchen", "office", "bathroom"}
 TYPICAL_SIZE = {"living": (5.0, 4.0), "bedroom": (4.0, 3.5), "kitchen": (3.5, 3.0), "office": (3.5, 3.0), "bathroom": (2.3, 1.7)}
+AREA_RANGE = {"living": (12, 40), "bedroom": (7, 30), "kitchen": (5, 16), "office": (6, 20), "bathroom": (1.2, 7)}
 TYPE_WORDS = {
     "living": ("гостин", "зал", "living", "общая"),
     "bedroom": ("спальн", "bedroom", "детск", "жилая"),
@@ -60,10 +61,11 @@ PLAN_PROMPT = (
 )
 
 PHOTO_PROMPT = (
-    "На фото комната. Определи её тип (living, bedroom, kitchen, office; если комната пустая — по окнам, "
+    "На фото комната. Определи её тип (living, bedroom, kitchen, office, bathroom; hallway — если это коридор или прихожая; "
+    "если комната пустая — по окнам, "
     "розеткам и выводам коммуникаций) и оцени размеры в метрах по ориентирам: межкомнатная дверь 0.8 x 2.0 м, "
     "окно около 1.4 м в ширину, потолок 2.5-2.8 м, розетка на высоте 0.3 м. Верни одно помещение в rooms "
-    "(name, type, width, length, area=width*length), height — оценка высоты потолка. "
+    "(name по-русски, type, width, length, area=width*length), height — оценка высоты потолка. "
     "В notes опиши, что видно: окна, двери, пол, стены, что уже стоит."
 )
 
@@ -104,26 +106,42 @@ def box_pixels(img, box):
     return x0, y0, x1, y1
 
 
+def degenerate(text):
+    sample = text.strip()[:60]
+    return len(sample) >= 20 and len(set(sample)) <= 2
+
+
+def parse_json(text):
+    for candidate in (text, (re.search(r"\{[\s\S]*\}", text) or [None])[0]):
+        if candidate:
+            try:
+                data = json.loads(candidate)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(data, dict):
+                return data
+    return None
+
+
 async def ask_vision(prompt, images, schema, temperature=0.0):
     encoded = [encode_image(i) for i in images]
+    error = "Ollama: пустой ответ"
     async with httpx.AsyncClient(timeout=VISION_TIMEOUT) as client:
-        for t, fmt in ((temperature, schema), (temperature + 0.3, schema), (temperature, None)):
+        for t, fmt, gpu in ((temperature, schema, True), (temperature + 0.3, schema, True), (temperature, schema, False), (temperature, None, False)):
             body = {"model": VISION_MODEL, "prompt": prompt, "images": encoded, "stream": False, "keep_alive": "2m",
-                    "options": {"temperature": min(t, 1.0), "num_ctx": 4096}}
+                    "options": {"temperature": min(t, 1.0), "num_ctx": 4096, "num_predict": 800}}
+            if not gpu:
+                body["options"]["num_gpu"] = 0
             if fmt:
                 body["format"] = fmt
             r = await client.post(f"{OLLAMA_HOST}/api/generate", json=body)
-            if r.status_code != 200:
-                raise RuntimeError(f"Ollama {r.status_code}: {r.text[:200]}")
-            data = r.json()
-            if data.get("done") and data.get("response"):
-                break
-    text = data.get("response", "")
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        m = re.search(r"\{[\s\S]*\}", text)
-        return json.loads(m.group(0)) if m else {}
+            text = r.json().get("response", "") if r.status_code == 200 else ""
+            data = None if degenerate(text) else parse_json(text)
+            if data is not None:
+                return data
+            error = f"Ollama {r.status_code}: {(r.text if r.status_code != 200 else text)[:200]}"
+            await client.post(f"{OLLAMA_HOST}/api/generate", json={"model": VISION_MODEL, "keep_alive": 0})
+    raise RuntimeError(error)
 
 
 def guess_type(raw_type, name):
@@ -185,7 +203,12 @@ async def extract_rooms(data_url, kind):
     if kind == "plan":
         height = 2.7
     else:
-        rooms, skipped = rooms[:1], []
+        rooms = rooms[:1]
+        for r in rooms:
+            lo, hi = AREA_RANGE[r["type"]]
+            if not lo <= r["width"] * r["length"] <= hi:
+                r["width"], r["length"] = TYPICAL_SIZE[r["type"]]
+                r["typical"] = True
     return {
         "rooms": [dict(r, height=height) for r in rooms],
         "skipped": skipped,

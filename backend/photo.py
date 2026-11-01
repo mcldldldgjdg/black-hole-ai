@@ -81,36 +81,8 @@ async def inpaint(data_url, prompt, style, box=None, mask_url=None):
     })
 
 
-def controlnet_unit(module, model, weight, end=1.0):
-    return {"enabled": True, "module": module, "model": model, "weight": weight, "guidance_end": end,
-            "processor_res": 512, "control_mode": "Balanced", "pixel_perfect": True}
-
-
 MLSD = "control_v11p_sd15_mlsd_fp16"
 DEPTH = "control_v11f1p_sd15_depth_fp16"
-
-
-async def restyle(data_url, style, prompt="", room_name="room", strength=0.75, mode="restyle"):
-    img = sd_size(decode_image(data_url))
-    if mode == "furnish":
-        text = f"fully furnished {STYLES_EN.get(style, 'modern')} {room_name}, {prompt or 'furniture'}, cozy interior"
-        units = [controlnet_unit("mlsd", MLSD, 0.55, end=0.6)]
-        strength = max(strength, 0.9)
-    else:
-        text = f"{STYLES_EN.get(style, 'modern')} {room_name} interior, {prompt}".strip(", ")
-        units = [controlnet_unit("mlsd", MLSD, 0.9), controlnet_unit("depth", DEPTH, 0.6)]
-    return await sd_img2img({
-        "init_images": [encode_image(img, "PNG")],
-        "prompt": with_lora(f"{text}, {QUALITY}"),
-        "negative_prompt": NEGATIVE,
-        "denoising_strength": strength,
-        "steps": 28,
-        "cfg_scale": 7,
-        "width": img.width,
-        "height": img.height,
-        "override_settings": {"sd_model_checkpoint": BASE_MODEL},
-        "alwayson_scripts": {"controlnet": {"args": units}},
-    })
 
 
 async def render_from_3d(image_url, depth_url, style, room_name, items, absent, look=""):

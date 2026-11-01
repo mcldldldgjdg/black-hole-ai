@@ -1,4 +1,4 @@
-var studio={image:null,original:null,box:null,history:[],busy:false};
+var studio={image:null,original:null,box:null,history:[],busy:false,room:null};
 
 function readImageFile(file,maxSide){
     return new Promise(function(resolve,reject){
@@ -37,26 +37,45 @@ function roomsFromImage(kind){
         status.hidden=false;status.className='vision-status';
         status.textContent=kind==='plan'?'🧠 Читаю план квартиры… (до минуты)':'🧠 Оцениваю комнату по фото… (до минуты)';
         readImageFile(file,1280).then(function(dataUrl){return postJSON('/vision/rooms',{image:dataUrl,kind:kind})}).then(function(d){
-            if(!d.rooms.length){status.className='vision-status warn';status.textContent='Не удалось распознать комнаты. '+(d.notes||'Попробуйте фото чётче или введите размеры вручную.');return}
+            if(!d.rooms.length){status.className='vision-status warn';status.textContent=d.skipped.length&&kind!=='plan'?'На фото: '+d.skipped.join(', ')+' — такие помещения сайт пока не проектирует.':'Не удалось распознать комнаты. '+(d.notes||'Попробуйте фото чётче или введите размеры вручную.');return}
             var found=d.rooms.map(function(r){return{type:r.type,width:r.width,length:r.length,height:r.height,wishes:''}});
             rooms=kind==='plan'?found:rooms.concat(found).slice(0,6);
             if(kind!=='plan'&&found[0].height)document.getElementById('ceiling-height').value=found[0].height;
             renderRooms();
             var msg=(kind==='plan'?'✅ С плана распознано помещений: ':'✅ Добавлена комната: ')+found.map(function(r){return ROOM_TYPES[r.type]+' '+r.width+'×'+r.length+' м'}).join(', ')+'.';
             if(d.skipped.length)msg+=' Пропущено: '+d.skipped.join(', ')+'.';
-            if(d.estimate)msg+=' Размеры по фото примерные — проверьте рулеткой.';
+            if(d.rooms.some(function(r){return r.typical}))msg+=' Размер по фото не определился — подставлен типичный для такой комнаты, поправьте вручную.';
+            else if(d.estimate)msg+=' Размеры по фото примерные — проверьте рулеткой.';
             status.textContent=msg;
         }).catch(function(e){status.className='vision-status warn';status.textContent='⚠️ '+e.message});
     });
 }
 
-function studioLoad(file){
-    readImageFile(file,1280).then(function(dataUrl){
-        studio.image=studio.original=dataUrl;studio.history=[];studio.box=null;
-        document.getElementById('studio-drop').hidden=true;
-        document.getElementById('studio-work').hidden=false;
-        studioRender();studioSuggestions(null);
-    }).catch(function(e){alert(e.message)});
+function studioOpen(i){
+    var room=currentResult.rooms[i];
+    if(!room||!room.image_url)return;
+    studio.room=i;studio.image=studio.original=room.image_url;studio.history=[];studio.box=null;
+    document.getElementById('studio-title').textContent='✏️ Правка фото: '+room.room_name;
+    document.getElementById('studio').hidden=false;
+    document.body.style.overflow='hidden';
+    studioRender();studioSuggestions(null);
+}
+
+function studioClose(){
+    if(studio.busy)return;
+    if(studio.image!==studio.original&&!confirm('Закрыть без сохранения? Правки пропадут.'))return;
+    document.getElementById('studio').hidden=true;
+    document.body.style.overflow='';
+}
+
+function studioSave(){
+    var i=studio.room,room=currentResult.rooms[i];
+    studioBusy('💾 Сохраняю…');
+    postJSON('/photo/save-room',{task_id:currentResult.task_id||null,room_index:i,image:studio.image}).then(function(){
+        room.image_url=studio.image;room.edited=true;studio.original=studio.image;studio.history=[];
+        studioBusy(null);studioRender();setPhotoState(i,'done');
+        document.getElementById('studio').hidden=true;document.body.style.overflow='';
+    }).catch(studioError);
 }
 
 function studioRender(){
@@ -65,6 +84,7 @@ function studioRender(){
     document.getElementById('studio-after').src=studio.image;
     document.getElementById('studio-undo').disabled=!studio.history.length;
     document.getElementById('studio-compare').hidden=studio.image===studio.original;
+    document.getElementById('studio-save').disabled=studio.image===studio.original;
     studioDrawBox();
 }
 
@@ -120,30 +140,21 @@ function studioSuggestions(d){
 function studioSuggest(){
     if(!studio.box)return;
     studioBusy('🧠 Смотрю на выделенную область… (до минуты)');
-    postJSON('/photo/suggest',{image:studio.image,box:studio.box,style:document.getElementById('studio-style').value})
+    postJSON('/photo/suggest',{image:studio.image,box:studio.box,style:studioStyle()})
         .then(function(d){studioBusy(null);studioDrawBox();studioSuggestions(d)}).catch(studioError);
 }
 
 function studioInpaint(prompt){
     if(!studio.box||!prompt)return;
     studioBusy('🎨 Перерисовываю выделенную область…');
-    postJSON('/photo/inpaint',{image:studio.image,box:studio.box,prompt:prompt,style:document.getElementById('studio-style').value})
+    postJSON('/photo/inpaint',{image:studio.image,box:studio.box,prompt:prompt,style:studioStyle()})
         .then(studioPush).catch(studioError);
 }
 
 function studioApplySuggestion(i){studioInpaint(studio.suggestions[i].prompt)}
 function studioApplyCustom(){studioInpaint(document.getElementById('studio-prompt').value.trim())}
 
-function studioRestyle(){
-    studioBusy('🪄 Перерисовываю всё фото… (до минуты)');
-    postJSON('/photo/restyle',{
-        image:studio.image,
-        style:document.getElementById('studio-style').value,
-        mode:document.getElementById('studio-mode').value,
-        room_type:document.getElementById('studio-room').value,
-        prompt:document.getElementById('studio-restyle-prompt').value.trim()
-    }).then(studioPush).catch(studioError);
-}
+function studioStyle(){return currentResult&&currentResult.style||'Современный'}
 
 function studioPush(d){
     studio.history.push(studio.image);studio.image=d.image;studio.box=null;
@@ -163,11 +174,7 @@ function studioDownload(){
 function studioCompare(v){document.getElementById('studio-after-wrap').style.clipPath='inset(0 0 0 '+v+'%)'}
 
 document.addEventListener('DOMContentLoaded',function(){
-    var drop=document.getElementById('studio-drop');
-    if(!drop)return;
-    drop.addEventListener('click',function(){pickFile(studioLoad)});
-    drop.addEventListener('dragover',function(e){e.preventDefault();drop.classList.add('over')});
-    drop.addEventListener('dragleave',function(){drop.classList.remove('over')});
-    drop.addEventListener('drop',function(e){e.preventDefault();drop.classList.remove('over');if(e.dataTransfer.files[0])studioLoad(e.dataTransfer.files[0])});
+    if(!document.getElementById('studio-stage'))return;
     studioInitSelection();
+    document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!document.getElementById('studio').hidden)studioClose()});
 });

@@ -228,7 +228,8 @@ function setPhotoState(i,state,text){
     var img=room.image_url?'<img src="'+room.image_url+'" class="generated-image" alt="Визуализация: '+esc(room.room_name)+'">':'';
     var note=state==='busy'?'<div class="photo-status">🎨 '+esc(text||'Рисуем фото по 3D-сцене…')+'</div>':(state==='error'?'<div class="photo-status warn">⚠️ '+esc(text)+'</div>':'');
     var schema=room.image_url&&room.image_source==='3d'&&state!=='busy'?'<div class="cam-schema-wrap"><div class="cam-schema-box"></div><p class="order-note">📐 Схема съёмки: жёлтый сектор — камера фото, бирюзовый — текущий вид 3D'+(roomCamera(room).side?', красный пунктир — стена, убранная на время съёмки (так снимают тесные комнаты в архвизе)':'')+'</p></div>':'';
-    slot.innerHTML=img+note+schema+'<button type="button" class="btn-secondary photo-redo" onclick="queueRoomPhoto('+i+',true)"'+(state==='busy'?' disabled':'')+'>🔄 Перерисовать фото по 3D</button>';
+    var edit=room.image_url&&state!=='busy'?'<button type="button" class="btn-secondary photo-redo" onclick="studioOpen('+i+')">✏️ Изменить фрагмент</button>':'';
+    slot.innerHTML=img+note+schema+'<div class="photo-actions">'+edit+'<button type="button" class="btn-secondary photo-redo" onclick="queueRoomPhoto('+i+',true)"'+(state==='busy'?' disabled':'')+'>🔄 Перерисовать фото по 3D</button></div>';
     var box=slot.querySelector('.cam-schema-box');
     if(box){renderCameraSchema(box,room);if(current3D)syncViewMarker(current3D.camera,current3D.controls.target)}
 }
@@ -237,6 +238,7 @@ function queueRoomPhoto(i,force){
     var room=currentResult&&currentResult.rooms[i];
     if(!room||!room.furniture.length||typeof THREE==='undefined')return;
     if(!force&&room.image_source==='3d'&&room.photo_version===PHOTO_VERSION)return;
+    if(force&&room.edited&&!confirm('Фото с вашими правками перерисуется заново по 3D. Продолжить?'))return;
     if(photoQueue.some(function(q){return q.result===currentResult&&q.i===i}))return;
     photoQueue.push({result:currentResult,i:i});
     setPhotoState(i,'busy','В очереди на отрисовку…');
@@ -253,7 +255,7 @@ function nextRoomPhoto(){
     postJSON('/render-room',{image:shot.image,depth:shot.depth,style:res.style,room_type:room.room_type,
         items:shot.items,absent:shot.absent,task_id:res.task_id||null,room_index:job.i,camera:shot.camera,version:PHOTO_VERSION,
         wall_color:roomLook(room).wall,look:roomLook(room).prompt})
-        .then(function(d){room.image_url=d.image;room.image_source='3d';room.photo_version=PHOTO_VERSION;room.photo_camera=shot.camera;if(res===currentResult)setPhotoState(job.i,'done')})
+        .then(function(d){room.image_url=d.image;room.image_source='3d';room.edited=false;room.photo_version=PHOTO_VERSION;room.photo_camera=shot.camera;if(res===currentResult)setPhotoState(job.i,'done')})
         .catch(function(e){if(res===currentResult)setPhotoState(job.i,'error',e.message)})
         .then(function(){photoBusy=false;photoCurrent=null;nextRoomPhoto()});
 }
