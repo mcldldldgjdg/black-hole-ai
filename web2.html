@@ -42,6 +42,7 @@ section{padding:6rem 5%;max-width:1400px;margin:0 auto}
 .ai-section{background:linear-gradient(180deg,rgba(138,43,226,0.05) 0%,transparent 100%);border-top:1px solid rgba(138,43,226,0.1);border-bottom:1px solid rgba(138,43,226,0.1);max-width:100%;padding:6rem 5%}
 .ai-container{max-width:1200px;margin:0 auto}
 .ai-demo-wrapper{display:grid;grid-template-columns:1fr 1fr;gap:3rem;margin-top:3rem}
+.ai-demo-wrapper>*{min-width:0}
 .ai-form{background:rgba(10,10,10,0.8);border:1px solid rgba(138,43,226,0.3);border-radius:16px;padding:2rem}
 .templates-label{display:block;margin-bottom:0.8rem;color:#00ffff;font-size:0.9rem;font-weight:500}
 .templates-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:0.6rem;margin-bottom:1.5rem}
@@ -229,7 +230,7 @@ footer{text-align:center;padding:2rem;border-top:1px solid rgba(255,255,255,0.05
 .order-total td{font-weight:700;color:#00ff88;font-size:1rem;border-bottom:none}
 .order-note{color:#777;font-size:.78rem}
 @media(max-width:900px){.room-grid{grid-template-columns:1fr}.nav-links li:not(.user-selector){display:none}.templates-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:640px){section,.ai-section{padding:4rem 16px}nav{padding:.8rem 16px}.logo{font-size:1.1rem;letter-spacing:1px}.user-select,.btn-add-user{padding:.5rem .6rem;font-size:.8rem}.room-row{grid-template-columns:repeat(3,1fr)}.room-row .rt{grid-column:1/-1}.room-area{text-align:left;padding-bottom:0;align-self:center}.room-remove{grid-column:3}.form-row{grid-template-columns:1fr}.room-grid .room-3d-container{height:340px}.ai-form,.ai-output{padding:1.2rem}.history-section{padding:0}.history-item{flex-direction:column;align-items:flex-start;gap:.8rem}.search-input-wrapper{flex-direction:column}.search-section{padding:0 16px}}
+@media(max-width:640px){.add-text{display:none}.user-select{max-width:42vw}section,.ai-section{padding:4rem 16px}nav{padding:.8rem 16px}.logo{font-size:1.1rem;letter-spacing:1px}.user-select,.btn-add-user{padding:.5rem .6rem;font-size:.8rem}.room-row{grid-template-columns:repeat(3,1fr)}.room-row .rt{grid-column:1/-1}.room-area{text-align:left;padding-bottom:0;align-self:center}.room-remove{grid-column:3}.form-row{grid-template-columns:1fr}.room-grid .room-3d-container{height:340px}.ai-form,.ai-output{padding:1.2rem}.history-section{padding:0}.history-item{flex-direction:column;align-items:flex-start;gap:.8rem}.search-input-wrapper{flex-direction:column}.search-section{padding:0 16px}}
 .room-wish{grid-column:1/-1}
 .room-wish input{font-size:.9rem}
 .room-wishes-note{color:#aaa;font-size:.85rem;margin:-.4rem 0 1rem}
@@ -328,7 +329,7 @@ footer{text-align:center;padding:2rem;border-top:1px solid rgba(255,255,255,0.05
 </head>
 <body>
 <div class="bg-grid"></div>
-<nav><div class="nav-container"><div class="logo">BLACK HOLE</div><ul class="nav-links"><li><a href="#home">Главная</a></li><li><a href="#about">Как это работает</a></li><li><a href="#ai-design">AI Дизайн</a></li><li><a href="#search">Поиск</a></li><li class="user-selector"><select class="user-select" id="user-select" onchange="switchUser()"></select><button class="btn-add-user" onclick="addUser()">+ Пользователь</button></li></ul></div></nav>
+<nav><div class="nav-container"><div class="logo">BLACK HOLE</div><ul class="nav-links"><li><a href="#home">Главная</a></li><li><a href="#about">Как это работает</a></li><li><a href="#ai-design">AI Дизайн</a></li><li><a href="#search">Поиск</a></li><li class="user-selector"><select class="user-select" id="user-select" onchange="switchUser()"></select><button class="btn-add-user" onclick="addUser()" title="Добавить пользователя">+<span class="add-text"> Пользователь</span></button></li></ul></div></nav>
 <section class="hero" id="home"><h1>Мы создаём цифровые вселенные</h1><p>Скинь обмеры квартиры — нейросеть нарисует дизайн и скажет, что и где заказать</p><a href="#ai-design" class="btn-primary">Начать проект</a></section>
 <section id="about"><h2 class="section-title">Как это работает</h2><p class="section-subtitle">От рулетки до корзины в магазине — за пару минут.</p><div class="how-grid"><div class="how-step"><div class="how-num">1</div><h3>📐 Обмеры</h3><p>Укажите помещения: длину, ширину, высоту потолков. Добавьте стиль, бюджет и пожелания.</p></div><div class="how-step"><div class="how-num">2</div><h3>🧠 Нейросеть проектирует</h3><p>LLM придумывает концепцию, палитру и подбирает мебель под размеры, Stable Diffusion рисует визуализацию, а 3D-схема показывает расстановку.</p></div><div class="how-step"><div class="how-num">3</div><h3>🛒 Смета и магазины</h3><p>Список того, что заказать: мебель, напольное покрытие, краска и плинтус с расчётом количества — и ссылки на магазины.</p></div></div></section>
 <section class="ai-section" id="ai-design"><div class="ai-container"><h2 class="section-title">AI Дизайн Интерьера</h2><p class="section-subtitle">Введите обмеры квартиры — нейросеть спроектирует интерьер, покажет 3D-расстановку и составит список покупок со ссылками на магазины</p><div class="ai-demo-wrapper"><div class="ai-form"><label class="templates-label">🏠 Быстрый старт</label><div class="templates-grid"><button type="button" class="template-btn" onclick="applyPreset('studio',this)">🏙️ Студия</button><button type="button" class="template-btn" onclick="applyPreset('one',this)">🚪 1-комн.</button><button type="button" class="template-btn" onclick="applyPreset('zoned',this)">🧩 1-комн. с зонами</button><button type="button" class="template-btn" onclick="applyPreset('two',this)">🏡 2-комн.</button><button type="button" class="template-btn" onclick="applyPreset('three',this)">🏢 3-комн.</button></div><p class="presets-hint">Кухня и санузел в пресетах уже есть — выберите число жилых комнат, остальное можно поменять ниже.</p><label class="templates-label">📐 Обмеры помещений</label><div class="vision-actions"><button type="button" class="btn-secondary" onclick="planEditorOpen()">✏️ Редактор планировки</button><button type="button" class="btn-secondary" onclick="roomsFromImage('plan')">🗺️ Распознать план квартиры</button><button type="button" class="btn-secondary" onclick="roomsFromImage('photo')">📷 Обмерить комнату по фото</button></div><p class="vision-status" id="vision-status" hidden></p><div class="rooms-editor" id="rooms-editor"></div><div class="rooms-toolbar"><button type="button" class="btn-secondary" onclick="addRoom()">+ Добавить помещение</button><label class="ceiling-field">Высота потолков, м <input type="number" id="ceiling-height" value="2.7" step="0.05" min="2" max="5"></label><label class="open-plan"><input type="checkbox" id="open-plan"> Студия — общее пространство без стен между зонами</label><span class="rooms-summary" id="rooms-summary"></span><span class="plan-note" id="plan-note" hidden>🗺️ Планировка из редактора · <a href="#" onclick="clearPlan();renderRooms();return false">сбросить</a></span></div><div class="form-row"><div class="form-group"><label>Стиль интерьера</label><select id="room-style"><option value="Скандинавский">Скандинавский</option><option value="Лофт">Лофт</option><option value="Минимализм">Минимализм</option><option value="Неоклассика">Неоклассика</option><option value="Современный">Современный</option><option value="Japandi">Japandi</option></select></div><div class="form-group"><label>Бюджет, ₽ (необязательно)</label><input type="number" id="room-budget" placeholder="500000" min="0" step="10000"></div></div><div class="form-group"><label>Общие пожелания ко всей квартире</label><textarea id="room-desc" rows="2" placeholder="Светлые тона, много дерева, есть кот..."></textarea></div><button class="btn-primary" id="generate-btn" style="width:100%" onclick="generateAI()">Сгенерировать дизайн</button></div><div class="ai-output" id="ai-output"><div class="ai-output-placeholder"><p style="font-size:3rem;margin-bottom:1rem">🌌</p><p>Здесь появится проект: визуализация, 3D-схема и смета</p></div></div></div><div class="history-section"><div class="history-header"><h3 class="history-title">📜 История генераций</h3><div style="display:flex;gap:0.8rem;align-items:center"><span class="history-count" id="history-count">0 записей</span><button class="btn-danger" onclick="clearHistory()">🗑️ Очистить всё</button></div></div><div class="history-list" id="history-list"><div class="history-empty"><p style="font-size:2rem;margin-bottom:0.5rem">📭</p><p>История пуста. Сгенерируйте первый дизайн!</p></div></div></div></div></section>
@@ -388,7 +389,7 @@ function normalizeDims(item){
     else if(type.indexOf('диван')!==-1||name.indexOf('диван')!==-1){h=Math.max(h,0.8);w=Math.max(w,1.6);d=Math.max(d,0.9)}
     else if(type.indexOf('телевизор')!==-1||type.indexOf('тв')!==-1){var big=Math.max(w,h);w=Math.min(Math.max(big,0.9),1.8);h=+(w*0.5625).toFixed(3);d=0.08;rot=Math.PI}
     else if(kind==='ковёр'){h=0.012}
-    else if(kind==='ванна'){if(/душ/.test(name)){w=0.9;d=0.9;h=2.0}else{w=Math.min(Math.max(Math.max.apply(null,nums.concat([1.5])),1.5),1.8);d=0.75;h=0.6}}
+    else if(kind==='ванна'){if(/душ/.test(name)){w=d=nums[0]>=0.7&&nums[0]<=1.2?nums[0]:0.9;h=2.0}else{w=Math.min(Math.max(Math.max.apply(null,nums.concat([1.5])),1.5),1.8);d=0.75;h=0.6}}
     else if(kind==='унитаз'){w=0.4;h=0.8;d=0.65}
     else if(kind==='раковина'){w=Math.min(Math.max(w,0.5),0.8);h=0.85;d=0.45}
     else if(kind==='стиралка'){w=0.6;h=0.85;d=0.45}
@@ -737,13 +738,16 @@ function computeLayout(furniture,roomDims,roomType,opts){
             else if(kind==='холодос'){x=W-w/2-hug;z=D-d/2-hug;}
             else{x=W/2+0.3;z=D/2;}
         }else if(roomType==='bathroom'){
-            if(kind==='ванна'){x=w/2+hug;z=d/2+hug;}
-            else if(kind==='унитаз'){x=W-w/2-hug;z=D-d/2-0.35;}
-            else if(kind==='стиралка'){x=W-w/2-hug;z=d/2+hug;}
-            else{
-                var tub=items.filter(function(li){return kindOf(li.item)==='ванна'})[0];
-                x=w/2+hug;z=Math.max(D-d/2-0.3,tub?tub.pos.z+tub.pos.d/2+0.05+d/2:0);
-            }
+            var tub=items.filter(function(li){return kindOf(li.item)==='ванна'})[0],tight=0.02;
+            var belowTub=function(){return tub?tub.pos.z+tub.pos.d/2+0.03+d/2:0};
+            var underTub=function(){return tub&&x-w/2<tub.pos.x+tub.pos.w/2+0.02};
+            if(kind==='ванна'){x=w/2+tight;z=d/2+tight;}
+            else if(kind==='унитаз'){x=W-w/2-tight;z=D-d/2-0.35;if(underTub())z=Math.max(z,belowTub());}
+            else if(kind==='стиралка'){x=W-w/2-tight;z=d/2+tight;}
+            else{x=w/2+tight;z=Math.max(D-d/2-0.3,belowTub());}
+            x=Math.min(Math.max(x,w/2+tight),W-w/2-tight);
+            z=Math.min(Math.max(z,d/2+tight),D-d/2-tight);
+            return{x:x,z:z,w:w,d:d,rot:rot};
         }else if(roomType==='office'){
             if(kind==='шкаф'){x=w/2+wall;z=D/2;}
             else if(kind==='стол'){x=W/2+0.5;z=D/2;}
@@ -786,6 +790,7 @@ function computeLayout(furniture,roomDims,roomType,opts){
             var ed=effDims(item,dims,roomType);
             var pos=psycho?psychoPlace(item,roomDims):(permKinds.indexOf(kind)!==-1?permSlot(kind,ed):(kind==='тумба'&&besideBed(ed))||freeSlot(ed));
             if(pos&&!psycho&&permKinds.indexOf(kind)!==-1&&hits(pos))pos=freeSlot(ed);
+            if(pos&&!psycho&&(pos.w>W-0.1+0.001||pos.d>D-0.1+0.001))pos=freeSlot({w:ed.d,d:ed.w,rot:(ed.rot||0)+Math.PI/2});
             return pos;
         }
         var pos=place(),fullW=dims.w;

@@ -91,7 +91,7 @@ class RenderRequest(BaseModel):
     look: str = Field(default="", max_length=200)
 
 class UserCreate(BaseModel):
-    username: str
+    username: str = Field(min_length=1, max_length=40)
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -186,6 +186,9 @@ async def search_furniture(q: str = Query(..., min_length=1, max_length=200)):
 
 @app.post("/users")
 async def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    user.username = user.username.strip()
+    if not user.username:
+        raise HTTPException(status_code=422, detail="Имя пользователя не может быть пустым")
     if db.query(User).filter(User.username == user.username).first():
         raise HTTPException(status_code=400, detail="Пользователь уже существует")
     new_user = User(username=user.username)
@@ -255,11 +258,15 @@ async def delete_generation(generation_id: int, db: Session = Depends(get_db)):
     return {"message": "Запись удалена"}
 
 @app.delete("/history")
-async def clear_history(user_id: int = Query(None), db: Session = Depends(get_db)):
-    query = db.query(Generation)
-    if user_id is not None: query = query.filter(Generation.user_id == user_id)
-    query.delete(); db.commit()
+async def clear_history(user_id: int = Query(...), db: Session = Depends(get_db)):
+    db.query(Generation).filter(Generation.user_id == user_id).delete(); db.commit()
     return {"message": "История очищена"}
+
+def require_image(data_url):
+    try:
+        vision.decode_image(data_url, 64)
+    except Exception:
+        raise HTTPException(status_code=422, detail="Не удалось открыть картинку: нужен JPG или PNG")
 
 async def run_model(coro):
     try:
@@ -270,16 +277,19 @@ async def run_model(coro):
 
 @app.post("/vision/rooms")
 async def rooms_from_image(req: RoomsFromImage):
+    require_image(req.image)
     return await run_model(vision.extract_rooms(req.image, req.kind))
 
 @app.post("/photo/suggest")
 async def photo_suggest(req: SuggestRequest):
+    require_image(req.image)
     return await run_model(vision.suggest_edits(req.image, req.box.model_dump(), req.style))
 
 @app.post("/photo/inpaint")
 async def photo_inpaint(req: InpaintRequest):
     if not req.box and not req.mask:
         raise HTTPException(status_code=422, detail="Выделите область на фото")
+    require_image(req.image)
     box = req.box.model_dump() if req.box else None
     prompt = req.prompt
     if vision.CYRILLIC.search(prompt):

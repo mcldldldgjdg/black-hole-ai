@@ -1,12 +1,45 @@
+# Python
 venv/
+.venv/
+*-venv/
 __pycache__/
 *.pyc
-*.log
-.DS_Store
-Thumbs.db
-.venv/
-ollama_data/
+.pytest_cache/
 
+# Secrets and local settings
+.env
+.env.*
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# Model data: Ollama keys and weights, SD models
+ollama_data/
+*.safetensors
+*.ckpt
+*.gguf
+*.pt
+*.bin
+
+# Databases with user history
+*.db
+*.sqlite
+*.sqlite3
+
+# Training data: licensed photos, own photos, datasets, outputs
 training/data/
 training/.venv*/
 training/out/
+
+# Archives and logs
+*.zip
+*.log
+
+# Editors and OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini

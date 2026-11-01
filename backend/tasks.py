@@ -37,6 +37,8 @@ DEFAULTS = {
     "стиралка": {"item": "Стиральная машина узкая 6 кг", "type": "стиралка", "description": "Узкая стиральная машина с фронтальной загрузкой", "materials": "металл, пластик", "dimensions": "60x85x45", "price": 32000},
 }
 PLUMBING = {"ванна", "унитаз", "раковина"}
+SMALL_BATH = 3.2
+SHOWER = {"item": "Душевой уголок 80×80 с поддоном", "type": "ванна", "description": "Компактный душевой уголок со стеклянными дверцами", "materials": "стекло, акрил", "dimensions": "80x200x80", "price": 18000, "qty": 1, "search_query": "душевой уголок 80x80 с поддоном"}
 FOREIGN = {
     "kitchen": {"кровать"} | PLUMBING,
     "living": {"гарнитур", "холодос"} | PLUMBING,
@@ -280,7 +282,7 @@ def capital(text):
     return text[:1].upper() + text[1:]
 
 
-def normalize_furniture(raw, room_type, workplace=False, wishes=None, divider=None):
+def normalize_furniture(raw, room_type, workplace=False, wishes=None, divider=None, compact=False):
     items, by_name = [], {}
     foreign = foreign_kinds(room_type)
     if wishes:
@@ -334,6 +336,8 @@ def normalize_furniture(raw, room_type, workplace=False, wishes=None, divider=No
         ensure_workplace(items)
     if "+" in room_type:
         add_divider(items, divider)
+    if compact:
+        items = [dict(SHOWER) if kind_of(it) == "ванна" and "душ" not in it["item"].lower() else it for it in items]
     items = keep_relevant(items, room_type, wishes, workplace or "+office" in room_type)
     for it in items:
         it["category"] = "furniture"
@@ -492,7 +496,8 @@ def design_room(room, style, description, budget, single_room=False):
         "wall_color": wall_color(design),
         "lighting": str(design.get("lighting") or "Общий потолочный свет + тёплая локальная подсветка зон.").strip()[:300],
         "furniture": normalize_furniture(design.get("furniture"), room_key(room),
-                                         bool(WORKPLACE_RE.search(own_wishes.lower())), own_wishes or None, room.get("divider")),
+                                         bool(WORKPLACE_RE.search(own_wishes.lower())), own_wishes or None, room.get("divider"),
+                                         compact=room["type"] == "bathroom" and room["area"] < SMALL_BATH),
         "materials": build_materials(design, room, style),
         "image_url": None,
         "wishes": own_wishes,
