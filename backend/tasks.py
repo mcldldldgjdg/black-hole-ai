@@ -33,7 +33,7 @@ DEFAULTS = {
     "стул": {"item": "Стул", "type": "стул", "description": "Удобный стул", "materials": "дерево, ткань", "dimensions": "45x90x45", "price": 6000},
     "ванна": {"item": "Ванна акриловая 170 см", "type": "ванна", "description": "Акриловая ванна с экраном", "materials": "акрил", "dimensions": "170x60x75", "price": 25000},
     "унитаз": {"item": "Унитаз подвесной с инсталляцией", "type": "унитаз", "description": "Подвесной унитаз с инсталляцией и кнопкой", "materials": "фарфор, сталь", "dimensions": "40x80x55", "price": 22000},
-    "раковина": {"item": "Раковина с тумбой 60 см", "type": "раковина", "description": "Подвесная тумба с раковиной и смесителем", "materials": "керамика, МДФ", "dimensions": "60x85x45", "price": 15000},
+    "раковина": {"item": "Раковина с тумбой и зеркалом 60 см", "type": "раковина", "description": "Подвесная тумба с раковиной, смесителем и зеркалом", "materials": "керамика, МДФ", "dimensions": "60x85x45", "price": 15000},
 }
 PLUMBING = {"ванна", "унитаз", "раковина"}
 FOREIGN = {
@@ -230,7 +230,7 @@ EXTRA_OK = {
     "bedroom": {"тумба", "кресло", "лампа", "ковёр", "стеллаж"},
     "kitchen": {"стул", "лампа", "техника"},
     "office": {"стеллаж", "лампа", "кресло", "тумба"},
-    "bathroom": {"техника", "тумба", "шкаф", "лампа"},
+    "bathroom": set(),
 }
 KIND_WORDS = {
     "стол": ("стол",), "стул": ("стул",), "тв": ("телевиз", "тв"), "диван": ("диван",), "кровать": ("кроват",),
@@ -247,9 +247,13 @@ def keep_relevant(items, room_type, wishes, workplace):
     allowed = set()
     for t in room_type.split("+"):
         allowed |= EXTRA_OK.get(t, EXTRA_OK["living"])
-    kept, extras = [], 0
+    kept, extras, plumbing = [], 0, set()
     for it in items:
         kind = kind_of(it)
+        if kind in PLUMBING:
+            if kind in plumbing:
+                continue
+            plumbing.add(kind)
         wished = bool(low) and any(w in low for w in KIND_WORDS.get(kind, ()))
         if kind in required or wished or it.get("workplace") or it.get("divider") or (workplace and kind == "стул"):
             kept.append(it)

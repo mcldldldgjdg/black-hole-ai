@@ -386,7 +386,38 @@ function createFurnitureModel(item,dims,psycho){
     var whiteMat=new THREE.MeshStandardMaterial({color:0xf5f5f5,roughness:0.5});
     var cushionMat=new THREE.MeshStandardMaterial({color:0x7B68AE,roughness:0.8});
     if(psycho){woodMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.85});darkWoodMat=new THREE.MeshStandardMaterial({color:0xf2f2f2,roughness:0.85});fabricMat=new THREE.MeshStandardMaterial({color:0xfbfbfb,roughness:0.95});metalMat=new THREE.MeshStandardMaterial({color:0xe8e8e8,roughness:0.4,metalness:0.2});whiteMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.7});cushionMat=new THREE.MeshStandardMaterial({color:0xf5f5f5,roughness:0.9});}
-    if(type.indexOf('кровать')!==-1||name.indexOf('кровать')!==-1){
+    if(kindOf(item)==='ванна'&&h>1.5){
+        box(new THREE.BoxGeometry(w,0.12,d),whiteMat,0,0.06,0);
+        var glassMat=new THREE.MeshStandardMaterial({color:0xcfe8f5,transparent:true,opacity:0.35,roughness:0.1});
+        box(new THREE.BoxGeometry(w,h-0.12,0.02),glassMat,0,h/2+0.06,d/2);box(new THREE.BoxGeometry(0.02,h-0.12,d),glassMat,w/2,h/2+0.06,0);
+    }else if(kindOf(item)==='ванна'){
+        box(new THREE.BoxGeometry(w,h,d),whiteMat,0,h/2,0);
+        box(new THREE.BoxGeometry(w-0.14,0.04,d-0.14),new THREE.MeshStandardMaterial({color:0xbfd8e6,roughness:0.3}),0,h-0.03,0);
+    }else if(kindOf(item)==='унитаз'){
+        var porc=new THREE.MeshStandardMaterial({color:0xfbfbfb,roughness:0.15,metalness:0.05});
+        var hung=/подвес|инсталляц/.test(name),seatY=0.42,bowlZ=0.09,bowlL=d-0.2;
+        if(hung){
+            box(new THREE.BoxGeometry(w*1.2,0.85,0.1),new THREE.MeshStandardMaterial({color:0xd9d4cc,roughness:0.6}),0,0.425,-d/2+0.05);
+            box(new THREE.BoxGeometry(0.22,0.15,0.015),metalMat,0,0.7,-d/2+0.105);
+        }else{
+            box(new THREE.BoxGeometry(w*0.9,0.38,0.17),porc,0,0.6,-d/2+0.1);
+            box(new THREE.BoxGeometry(w*0.95,0.03,0.19),porc,0,0.8,-d/2+0.1);
+            box(new THREE.CylinderGeometry(0.025,0.025,0.012,16),metalMat,0,0.82,-d/2+0.1);
+            box(new THREE.CylinderGeometry(w*0.2,w*0.26,0.26,20),porc,0,0.13,bowlZ).scale.z=1.3;
+        }
+        var bowl=box(new THREE.CylinderGeometry(w/2,w*0.32,0.18,28),porc,0,seatY-0.1,bowlZ);bowl.scale.z=bowlL/w;
+        var seat=box(new THREE.TorusGeometry(w*0.4,0.035,10,28),porc,0,seatY,bowlZ);seat.rotation.x=Math.PI/2;seat.scale.y=bowlL/w;
+        var lid=box(new THREE.BoxGeometry(w*0.85,0.42,0.02),porc,0,seatY+0.22,-d/2+0.22);lid.rotation.x=-0.12;
+    }else if(kindOf(item)==='раковина'){
+        box(new THREE.BoxGeometry(w,0.5,d),woodMat,0,0.55,0);
+        box(new THREE.BoxGeometry(w-0.04,0.004,0.01),metalMat,0,0.55,d/2+0.005);
+        box(new THREE.BoxGeometry(w,0.06,d),whiteMat,0,0.83,0);
+        box(new THREE.BoxGeometry(w*0.6,0.02,d*0.55),new THREE.MeshStandardMaterial({color:0xbfd8e6,roughness:0.2}),0,0.855,0.02);
+        box(new THREE.CylinderGeometry(0.015,0.015,0.2,8),metalMat,0,0.95,-d/2+0.06);
+        box(new THREE.BoxGeometry(0.02,0.02,0.12),metalMat,0,1.04,-d/2+0.11);
+        box(new THREE.BoxGeometry(w*0.9,0.7,0.03),woodMat,0,1.45,-d/2+0.015);
+        box(new THREE.BoxGeometry(w*0.84,0.64,0.01),new THREE.MeshStandardMaterial({color:0xd4e3ec,roughness:0.05,metalness:0.2,emissive:0x52606a,emissiveIntensity:0.35}),0,1.45,-d/2+0.035);
+    }else if(type.indexOf('кровать')!==-1||name.indexOf('кровать')!==-1){
         var base=new THREE.Mesh(new THREE.BoxGeometry(w,0.3,d),darkWoodMat);base.position.y=0.15;base.castShadow=true;group.add(base);
         var matt=new THREE.Mesh(new THREE.BoxGeometry(w-0.05,0.2,d-0.05),whiteMat);matt.position.y=0.4;matt.castShadow=true;group.add(matt);
         var p1=new THREE.Mesh(new THREE.BoxGeometry(w*0.3,0.15,d*0.2),whiteMat);p1.position.set(-w*0.25,0.55,-d*0.3);p1.castShadow=true;group.add(p1);
@@ -447,22 +478,6 @@ function createFurnitureModel(item,dims,psycho){
         for(var gi=0;gi<cn;gi++){var df=new THREE.Mesh(new THREE.BoxGeometry(w/cn-0.03,h*0.4,0.03),new THREE.MeshStandardMaterial({color:0x6B4E3D,roughness:0.6}));df.position.set(-w/2+w/cn*(gi+0.5),h*0.21,d/2+0.02);group.add(df);}
     }else if(type.indexOf('столешниц')!==-1||name.indexOf('столешниц')!==-1){
         var tp=new THREE.Mesh(new THREE.BoxGeometry(w,0.04,d),woodMat);tp.position.y=0.9;tp.castShadow=true;group.add(tp);
-    }else if(kindOf(item)==='ванна'&&h>1.5){
-        box(new THREE.BoxGeometry(w,0.12,d),whiteMat,0,0.06,0);
-        var glassMat=new THREE.MeshStandardMaterial({color:0xcfe8f5,transparent:true,opacity:0.35,roughness:0.1});
-        box(new THREE.BoxGeometry(w,h-0.12,0.02),glassMat,0,h/2+0.06,d/2);box(new THREE.BoxGeometry(0.02,h-0.12,d),glassMat,w/2,h/2+0.06,0);
-    }else if(kindOf(item)==='ванна'){
-        box(new THREE.BoxGeometry(w,h,d),whiteMat,0,h/2,0);
-        box(new THREE.BoxGeometry(w-0.14,0.04,d-0.14),new THREE.MeshStandardMaterial({color:0xbfd8e6,roughness:0.3}),0,h-0.03,0);
-    }else if(kindOf(item)==='унитаз'){
-        box(new THREE.BoxGeometry(w*0.8,0.4,d*0.75),whiteMat,0,0.2,0.05);
-        box(new THREE.BoxGeometry(w,0.06,d*0.8),whiteMat,0,0.43,0.05);
-        box(new THREE.BoxGeometry(w,0.45,0.16),whiteMat,0,0.6,-d/2+0.08);
-    }else if(kindOf(item)==='раковина'){
-        box(new THREE.BoxGeometry(w,0.5,d),woodMat,0,0.5,0);
-        box(new THREE.BoxGeometry(w,0.1,d),whiteMat,0,0.8,0);
-        box(new THREE.BoxGeometry(w*0.6,0.03,d*0.6),new THREE.MeshStandardMaterial({color:0xbfd8e6,roughness:0.3}),0,0.86,0);
-        box(new THREE.CylinderGeometry(0.015,0.015,0.2,8),metalMat,0,0.95,-d/2+0.06);
     }else if(kindOf(item)==='стиралка'){
         box(new THREE.BoxGeometry(w,h,d),whiteMat,0,h/2,0);
         var door=box(new THREE.CylinderGeometry(0.19,0.19,0.03,24),new THREE.MeshStandardMaterial({color:0x2b2f36,roughness:0.2}),0,h*0.5,d/2+0.01);door.rotation.x=Math.PI/2;
@@ -877,6 +892,7 @@ function init3DRoom(container,furniture,roomDims,roomType,look){
         if(k>=1)flight=null;
     }
     var raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2(),hoveredGroup=null;
+    function highlight(g,on){g.traverse(function(c){if(!c.material||!c.material.emissive)return;if(c.userData.glow===undefined)c.userData.glow=c.material.emissiveIntensity;c.material.emissiveIntensity=on?Math.max(c.userData.glow,0.2):c.userData.glow})}
     function getAllMeshes(){var m=[];furnitureGroups.forEach(function(g){g.traverse(function(c){if(c.isMesh)m.push(c)})});return m}
     renderer.domElement.addEventListener('mousemove',function(event){
         if(fixedTooltip)return;
@@ -886,11 +902,11 @@ function init3DRoom(container,furniture,roomDims,roomType,look){
         var its=raycaster.intersectObjects(getAllMeshes(),false),found=null;
         if(its.length>0){var o=its[0].object;while(o&&!o.userData.furniture)o=o.parent;if(o&&o.userData.furniture)found=o}
         if(found&&found!==hoveredGroup){
-            if(hoveredGroup)hoveredGroup.traverse(function(c){if(c.material)c.material.emissiveIntensity=0});
-            hoveredGroup=found;hoveredGroup.traverse(function(c){if(c.material&&c.material.emissive)c.material.emissiveIntensity=0.2});
+            if(hoveredGroup)highlight(hoveredGroup,false);
+            hoveredGroup=found;highlight(found,true);
             renderer.domElement.style.cursor='pointer';showTooltip3D(event,found.userData.furniture,false);
         }else if(!found&&hoveredGroup){
-            hoveredGroup.traverse(function(c){if(c.material&&c.material.emissive)c.material.emissiveIntensity=0});
+            highlight(hoveredGroup,false);
             hoveredGroup=null;renderer.domElement.style.cursor='grab';hideTooltip3D();
         }
     });
@@ -902,7 +918,7 @@ function init3DRoom(container,furniture,roomDims,roomType,look){
         if(its.length>0){var o=its[0].object;while(o&&!o.userData.furniture)o=o.parent;if(o&&o.userData.furniture)found=o}
         if(found){if(fixedTooltip===found){fixedTooltip=null;hideTooltip3D()}else{fixedTooltip=found;showTooltip3D(event,found.userData.furniture,true)}}else{fixedTooltip=null;hideTooltip3D()}
     });
-    renderer.domElement.addEventListener('mouseleave',function(){if(!fixedTooltip){if(hoveredGroup){hoveredGroup.traverse(function(c){if(c.material&&c.material.emissive)c.material.emissiveIntensity=0});hoveredGroup=null}hideTooltip3D()}});
+    renderer.domElement.addEventListener('mouseleave',function(){if(!fixedTooltip){if(hoveredGroup){highlight(hoveredGroup,false);hoveredGroup=null}hideTooltip3D()}});
     var rafId;
     function animate(now){rafId=requestAnimationFrame(animate);stepFlight(now||performance.now());controls.update();renderer.render(scene,camera)}
     animate();

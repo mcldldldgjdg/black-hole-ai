@@ -1,8 +1,8 @@
-var PHOTO_SIZE={w:768,h:512},PHOTO_VERSION=3;
+var PHOTO_SIZE={w:768,h:512},PHOTO_VERSION=4;
 var KIND_EN={'диван':'sofa','кровать':'double bed','шкаф':'tall wardrobe with doors','стеллаж':'bookshelf','тв':'TV on a TV stand',
     'стол':'table','стул':'chair','кресло':'armchair','тумба':'nightstand','гарнитур':'kitchen cabinets with countertop',
     'холодос':'refrigerator','лампа':'floor lamp','растен':'potted plant','ковёр':'rug',
-    'ванна':'white bathtub','унитаз':'wall-hung toilet','раковина':'washbasin on a vanity cabinet','стиралка':'washing machine'};
+    'ванна':'white bathtub','унитаз':'toilet','раковина':'washbasin on a vanity cabinet with a wall mirror above','стиралка':'washing machine'};
 var ABSENT_EN={'кровать':'bed','диван':'sofa','шкаф':'wardrobe','тв':'television','гарнитур':'kitchen cabinets','холодос':'refrigerator','ванна':'bathtub','унитаз':'toilet'};
 var COLOR_EN={'бел':'white','черн':'black','чёрн':'black','сер':'grey','беж':'beige','коричн':'brown','зел':'green','син':'blue',
     'голуб':'light blue','красн':'red','желт':'yellow','жёлт':'yellow','оранж':'orange','розов':'pink','фиолет':'purple','дерев':'wooden','дуб':'oak'};
@@ -25,6 +25,7 @@ function describeForPhoto(layout,roomType){
             else if(roomType==='living')noun='coffee table';
         }
         if(k==='ванна'&&/душ/i.test(li.item.item))noun='glass shower cabin';
+        if(k==='унитаз')noun=/подвес|инсталляц/i.test(li.item.item)?'wall-hung toilet':'floor-standing toilet with cistern';
         if(li.item.divider)noun+=' used as a room divider';
         items.push(colorOf(li.item.item)+noun);
         var chairs=chairSpots(li.item,li.dims,roomType).length;
